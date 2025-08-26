@@ -1,12 +1,12 @@
 [package]
 name = "openssl_provider_forge"
-version = "0.8.4"
+version = "0.8.5-dev"
 edition = "2021"
 
 [dependencies]
 anyhow = "1.0.94"
 bitflags = "2.6.0"
-crypto = { version = "0.5.1", features = ["std", "signature"]}
+crypto = { version = "0.5.1", features = ["std", "signature"] }
 function_name = "0.3"
 libc = "0.2"
 log = "0.4"
