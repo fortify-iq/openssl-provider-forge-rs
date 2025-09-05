@@ -7,13 +7,14 @@ use std::ptr;
 fn test_int_data() {
     setup().expect("setup() failed");
 
+    let mut storage: i64 = 0;
     let mut int_data = IntData {
         param: &mut OSSL_PARAM {
-            data: ptr::null_mut(),
+            data: &mut storage as *mut i64 as *mut std::ffi::c_void,
             return_size: 0,
             data_type: OSSL_PARAM_INTEGER,
             key: ptr::null(),
-            data_size: 0,
+            data_size: size_of::<i64>(),
         },
     };
 
@@ -21,19 +22,21 @@ fn test_int_data() {
     let result = int_data.set(value);
 
     assert_eq!(result, Ok(()));
+    assert_eq!(unsafe { *(int_data.param.data as *const i64) }, value);
 }
 
 #[test]
-fn test_uint_data_() {
+fn test_uint_data() {
     setup().expect("setup() failed");
 
+    let mut storage: u64 = 0;
     let mut uint_data = UIntData {
         param: &mut OSSL_PARAM {
-            data: ptr::null_mut(),
+            data: &mut storage as *mut u64 as *mut std::ffi::c_void,
             return_size: 0,
             data_type: OSSL_PARAM_UNSIGNED_INTEGER,
             key: ptr::null(),
-            data_size: 0,
+            data_size: size_of::<u64>(),
         },
     };
 
@@ -41,10 +44,8 @@ fn test_uint_data_() {
     let result = uint_data.set(value);
 
     assert_eq!(result, Ok(()));
+    assert_eq!(unsafe { *(uint_data.param.data as *const u64) }, value);
 }
-
-// In the above 2 tests, we declared a mut variables 'int_data' and 'uint_data' of type IntData & UIntData respectively.
-// Setting all the fields of the struct to the null except 'data type'. Later, using set() method to fee the result with the test value.
 
 #[test]
 fn test_utf8_ptr_data_set() {
