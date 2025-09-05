@@ -576,10 +576,20 @@ impl<'a> OSSLParam<'a> {
     /// ## TODO(🛠️): add examples (tracked by: [#9](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/9))
     pub fn get_data_type(&self) -> Option<u32> {
         let cptr: *const OSSL_PARAM = self.get_c_struct();
-        // FIXME: cptr could be NULL
-        let r = &(unsafe { *cptr });
-        Some(r.data_type)
-        // FIXME: should we return None if cptr is NULL or if it is an END item (i.e., its `key` is NULL)?
+
+        if cptr.is_null() {
+            return None;
+        }
+
+        // now we know cptr is non-null, so we can dereference it
+        let p = &(unsafe { *cptr });
+
+        // if p.key was null, p should be treated as OSSL_PARAM_END and doesn't have a "data type"
+        if p.key.is_null() {
+            return None;
+        }
+
+        Some(p.data_type)
     }
 
     /// Checks if this _parameter_ has been modified.
