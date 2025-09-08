@@ -162,9 +162,27 @@ impl TryFrom<*mut OSSL_PARAM> for Utf8PtrData<'_> {
     }
 }
 
-/// ## TODO(🛠️): add examples (tracked by: [#3](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/3))
 impl TryFrom<*mut OSSL_PARAM> for Utf8StringData<'_> {
     type Error = OSSLParamError;
+
+    /// Converts a raw OpenSSL parameter (`OSSL_PARAM`) to an `OSSLParam` enum variant (Utf8StringData).
+    /// Ensures the pointer is not null and that the `data_type` matches an expected OpenSSL parameter type.
+    /// # Examples
+    ///
+    /// ```rust
+    /// use openssl_provider_forge::osslparams::OSSLParam;
+    /// use openssl_provider_forge::bindings::OSSL_PARAM;
+    ///
+    /// // Assume we have a raw pointer `param_ptr` of type `*mut OSSL_PARAM`.
+    /// // For demonstration, we are using a null pointer here:
+    /// let param_ptr: *mut OSSL_PARAM = std::ptr::null_mut();
+    ///
+    /// // Attempt to convert the pointer into an `OSSLParam`.
+    /// match OSSLParam::try_from(param_ptr) {
+    ///     Ok(param) => println!("Successfully converted to OSSLParam."),
+    ///     Err(e) => println!("Failed to convert: {:?}", e),
+    /// }
+    /// ```
 
     fn try_from(param: *mut OSSL_PARAM) -> Result<Self, Self::Error> {
         match unsafe { param.as_mut() } {
