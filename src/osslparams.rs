@@ -480,7 +480,6 @@ impl<'a> OSSLParam<'a> {
     /// assert_eq!(rich_type.get_key(), Some(c"a_key")); // same as the key defined when `p` was declared
     /// assert_eq!(rich_type.get(), Some(42)); // same as the value defined when `p` was declared
     /// ```
-    ///
     pub fn get_c_struct(&self) -> *const OSSL_PARAM {
         match self {
             OSSLParam::Utf8Ptr(d) => d.param,
@@ -494,7 +493,8 @@ impl<'a> OSSLParam<'a> {
     /// Retrieves the C FFI representation of this [`OSSLParam`], regardless of its variant,
     /// as a mutable pointer to [`OSSL_PARAM`].
     ///
-    /// This is equivalent to [`OSSLParam::get_c_struct`] and **the same caveats apply**.
+    /// This is equivalent to [`OSSLParam::get_c_struct`] except for the mutability in the
+    /// return type, and **the same caveats apply**.
     ///
     /// # Return value
     ///
@@ -509,8 +509,14 @@ impl<'a> OSSLParam<'a> {
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#8](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/8))
-    ///
+    /// ```rust
+    /// # use openssl_provider_forge::osslparams::*;
+    /// let p = OSSLParam::new_const_int(c"a_key", Some(&42));
+    /// // `param` must be mutable in order to call `get_c_struct_mut()` on it
+    /// let mut param = OSSLParam::try_from(&p).unwrap();
+    /// let mut ffi_param = param.get_c_struct_mut();
+    /// // now `ffi_param` can be used to call extern C functions that take non-const `OSSL_PARAM*`
+    /// ```
     pub fn get_c_struct_mut(&mut self) -> *mut OSSL_PARAM {
         match self {
             OSSLParam::Utf8Ptr(d) => d.param,
