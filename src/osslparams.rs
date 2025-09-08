@@ -609,7 +609,7 @@ impl<'a> OSSLParam<'a> {
     // According to OpenSSL documentation, if the `return_size` differs
     // from the constant `OSSL_PARAM_UNMODIFIED`,
     // the parameter is considered to have been modified.
-    pub fn modified(&mut self) -> bool {
+    pub fn modified(&self) -> bool {
         // FIXME: could the struct pointer be NULL?
         //        We should always perform check,
         //        or comment on why they are not necessary,
