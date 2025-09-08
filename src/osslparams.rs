@@ -567,13 +567,31 @@ impl<'a> OSSLParam<'a> {
     ///
     /// # Return value
     ///
-    /// > ## 🛠️ TODO
-    /// >
-    /// > Document in which cases we get `Some(_)` and when the user should expect a `None`
+    /// * Returns `Some(data_type: u32)` for valid [`OSSLParam`] references.
+    /// * Returns `None` if the [`OSSLParam`] reference is null or if it is
+    /// [`OSSL_PARAM_END`].
+    ///
+    /// The latter should never happen in normal use, because
+    /// [`OSSLParam::try_from`] only succeeds when called on a struct that
+    /// contains one of the data types that can be represented by [`OSSLParam`],
+    /// but the checks are performed anyway.
+    ///
+    /// The names of the `u32` constants for the different data types can be
+    /// found in ["Supported
+    /// types"](https://docs.openssl.org/master/man3/OSSL_PARAM/#supported-types),
+    /// and their numerical values can be found in the OpenSSL header file
+    /// `openssl/core.h`.
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#9](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/9))
+    /// ```
+    /// use openssl_provider_forge::osslparams::*;
+    /// use openssl_provider_forge::bindings::OSSL_PARAM_UNSIGNED_INTEGER;
+    ///
+    /// let p = OSSLParam::new_const_uint(c"a_key", Some(&10u32));
+    /// let param = OSSLParam::try_from(&p).unwrap();
+    /// assert_eq!(param.get_data_type(), Some(OSSL_PARAM_UNSIGNED_INTEGER));
+    /// ```
     pub fn get_data_type(&self) -> Option<u32> {
         let cptr: *const OSSL_PARAM = self.get_c_struct();
 
