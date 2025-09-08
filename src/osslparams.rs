@@ -610,7 +610,7 @@ impl<'a> OSSLParam<'a> {
         Some(p.data_type)
     }
 
-    /// Checks if this _parameter_ has been modified.
+    /// Checks if this parameter has been modified.
     ///
     /// This function checks if the parameter represented by this [`OSSLParam`]
     /// has been set or updated.
@@ -620,6 +620,22 @@ impl<'a> OSSLParam<'a> {
     /// # Examples
     ///
     /// ## TODO(🛠️): add examples (tracked by: [#10](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/10))
+    /// ```
+    /// use openssl_provider_forge::osslparams::*;
+    ///
+    /// # let mut x = 42;
+    /// # let my_external_param = OSSLParam::new_const_int(c"arbitrary_key", Some(&x));
+    /// # let EXTERNAL_OSSL_PARAM_PTR: *const OSSL_PARAM = std::ptr::from_ref(&my_external_param).cast();
+    /// // EXTERNAL_OSSL_PARAM_PTR is a `*OSSL_PARAM`, from which
+    /// // we create a "rich" OSSLParam Rust object (i.e., `my_param`).
+    /// // We can then safely manipulate `my_param` using Rust methods.
+    /// // This example assumes that the param at EXTERNAL_OSSL_PARAM_PTR
+    /// // is newly created and has not been modified yet.
+    /// let mut my_param = OSSLParam::try_from(EXTERNAL_OSSL_PARAM_PTR).unwrap();
+    /// assert!(my_param.modified() == false);
+    /// my_param.set(48);
+    /// assert!(my_param.modified() == true);
+    /// ```
     ///
     /// [OSSL_PARAM_modified(3ossl)]: https://docs.openssl.org/master/man3/OSSL_PARAM_modified/
     //
