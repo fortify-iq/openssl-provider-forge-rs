@@ -732,49 +732,51 @@ impl<'a> OSSLParam<'a> {
     }
 }
 
-/// A trait for setting type-safe values on the inner data of an [`OSSLParam`] enum.
-///
-/// This trait ensures type safety when setting values on [`OSSLParam`].
+/// A trait for setting values on the inner data of an [`OSSLParam`] enum while maintaining type
+/// safety.
 ///
 /// Modules within [`self::data`] implement this trait on [`OSSLParam`] for
 /// various types `T`.
+// In most cases this is handled by using the private `impl_setter!` macro to generate the
+// implementation automatically.
 pub trait OSSLParamSetter<T> {
     /// This method sets the inner value for this specific type `T`.
     ///
-    /// It checks if the inner variant support values of type `T` before delegating
-    /// safely to an inner `set` method.
+    /// This method is not intended to be called directly. It serves as a way for
+    /// [`OSSLParam::set`] to dispatch to different setter functions based on the type of the
+    /// argument.
+    ///
+    /// Implementations should check if the inner variant supports values of type `T` and if so,
+    /// delegate to a [`TypedOSSLParamData::set`] method on the inner type from [`self::data`].
     ///
     /// # Return values
     ///
-    /// It returns an [`OSSLParamError`] if the operation fails, or [`Ok(())`] otherwise.
-    ///
-    /// # Examples
-    ///
-    /// ## TODO(🛠️): add examples (tracked by: [#12](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/12))
-    ///
+    /// It returns an [`OSSLParamError`] if the operation fails, or `Ok(())` otherwise.
     fn set_inner(&mut self, value: T) -> Result<(), OSSLParamError>;
 }
 
-/// A trait for safely retrieving type-specific values from an [`OSSLParam`] enum.
-///
-/// This trait ensures type safety when getting values on [`OSSLParam`].
+/// A trait for getting values from the inner data of an [`OSSLParam`] enum while maintaining type
+/// safety.
 ///
 /// Modules within [`self::data`] implement this trait on [`OSSLParam`] for
 /// various types `T`.
 pub trait OSSLParamGetter<T> {
     /// This method extracts the inner value for this specific type `T`.
     ///
-    /// It checks if the inner variant support values of type `T` before delegating
-    /// safely to an inner `get` method.
+    /// This method is not intended to be called directly. It serves as a way for
+    /// [`OSSLParam::get`] to dispatch to different getter functions based on the return type
+    /// expected at its call site.
+    ///
+    /// Implementations should check if the inner variant supports data of type `T` and if so,
+    /// extract the data from the inner param as the appropriate Rust type and return it wrapped in
+    /// a [`Some`]. If the types are not compatible (e.g. when `T` is `&CStr` but `self` is an
+    /// [`OSSLParam::Int`]), or if `self` can theoretically support `T` but the actual data in the
+    /// param cannot be safely converted to `T` (e.g. when `T` is `i32` but the data is an `i64`
+    /// that is too large to fit), implementations should return `None`.
     ///
     /// # Return values
     ///
-    /// It returns `Some(T)` if the parameter’s data matches type `T`, otherwise `None`.
-    ///
-    /// # Examples
-    ///
-    /// ## TODO(🛠️): add examples (tracked by: [#12](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/12))
-    ///
+    /// It returns `Some(data: T)` if the parameter’s data matches type `T`, otherwise `None`.
     fn get_inner(&self) -> Option<T>;
 }
 
