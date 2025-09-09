@@ -803,22 +803,21 @@ pub trait OSSLParamData {
 /// Extends [`OSSLParamData`] to provide methods for setting values and creating null parameters,
 /// ensuring type-safe manipulation of C struct data for parameters storing specific Rust types.
 pub trait TypedOSSLParamData<T>: OSSLParamData {
-    /// Sets the value of the parameter to the provided type `T`.
+    /// Sets the inner data of the parameter to the given `value`.
     ///
-    /// This method updates the [`OSSLParam`] to store the given value, adjusting the
-    /// return size accordingly.
-    /// It performs type checks to determine if the value can
-    /// be safely converted to the target data type ([`i32`] or [`i64`]`, or [`u32`], etc. ).
+    /// This method is not intended to be called directly. It serves as a way for
+    /// [`OSSLParamSetter::set_inner`] to dispatch to different setter functions based on the
+    /// type of the argument.
+    ///
+    /// Implementations should update the inner param struct in the [`OSSLParam`] to store the
+    /// given value and adjust the param's `return_size` field accordingly, after checking that the
+    /// value can be safely converted to the target data type ([`i32`] to [`i64`] but maybe not to
+    /// [`u32`] or [`i16`] depending on the actual value, etc.).
     ///
     /// # Return values
     ///
     /// It returns an [`OSSLParamError`] if the inner data pointer is `NULL` or the conversion fails,
     /// otherwise `Ok(())`.
-    ///
-    /// # Examples
-    ///
-    /// ## TODO(🛠️): add examples (tracked by: [#12](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/12))
-    ///
     fn set(&mut self, value: T) -> Result<(), OSSLParamError>;
 }
 
