@@ -780,19 +780,32 @@ pub trait OSSLParamGetter<T> {
     fn get_inner(&self) -> Option<T>;
 }
 
-/// A marker trait for types representing OpenSSL parameter data.
+/// A trait for types representing OpenSSL parameter data.
 ///
 /// Provides a common abstraction for OpenSSL parameter types, allowing the use of trait objects
 /// and simplifying type management.
 ///
-/// It's implemented by all [`OSSLParam`] data types for consistency and flexibility.
+/// All the inner data structs that get wrapped by [`OSSLParam`] variants ([`IntData`], etc.)
+/// implement this trait.
 pub trait OSSLParamData {
-    /// This function returns an OSSLParam of the given type and using the given key, but setting its value to NULL.
+    /// Returns an inner parameter data struct of the given type with the given key, with its data
+    /// set to null or to an empty placeholder value.
+    ///
+    /// This is useful when creating parameters on the provider side to respond to queries from
+    /// OpenSSL about what parameters are supported by the provider.
+    ///
+    /// ️⚠️ Implementations of this method *may* preemptively allocate some storage so that a value
+    /// can be set on the returned param data struct later, but they are under no obligation to do
+    /// so.
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#12](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/12))
-    ///
+    /// ```
+    /// # use openssl_provider_forge::osslparams::*;
+    /// # use openssl_provider_forge::bindings::OSSL_PROV_PARAM_NAME;
+    /// // create an empty param with the key OSSL_PROV_PARAM_NAME
+    /// let name_param = OSSLParam::Utf8Ptr(Utf8PtrData::new_null(OSSL_PROV_PARAM_NAME));
+    /// ```
     fn new_null(key: &KeyType) -> Self
     where
         Self: Sized;
