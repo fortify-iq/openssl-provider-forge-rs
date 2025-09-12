@@ -109,17 +109,34 @@ impl<'a> OSSLParam<'a> {
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#6](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/6))
+    /// ```rust
+    /// use openssl_provider_forge::osslparams::*;
+    /// use std::ffi::CStr;
     ///
+    /// let key: &KeyType = c"my_key";
+    /// let value: &CStr = c"test value";
+    ///
+    /// // In case of "Some"
+    /// let param = OSSLParam::new_const_utf8ptr(&key, Some(&value));
+    ///
+    /// assert_eq!(param.data_type, OSSL_PARAM_UTF8_PTR);
+    /// assert_eq!(param.return_size, OSSL_PARAM_UNMODIFIED);
+    ///
+    /// // In case of "None"
+    /// let empty_param = OSSLParam::new_const_utf8ptr(&key, None);
+    /// assert!(empty_param.data.is_null());
+    /// assert_eq!(empty_param.data_size, 0);
+    ///
+    /// ```
     pub const fn new_const_utf8ptr(key: &'a KeyType, value: Option<&'a CStr>) -> CONST_OSSL_PARAM {
         let (data, data_size) = match value {
             Some(value) => {
-                //let v = value.as_ptr();
-                //let v = v as *mut std::ffi::c_void;
-                //let sz = value.count_bytes();
-                //(v, sz)
-                let _ = value;
-                todo!()
+                let v = value.as_ptr();
+                let v = v as *mut std::ffi::c_void;
+                let sz = value.count_bytes();
+                (v, sz)
+                //let _ = value;
+                //todo!()
             }
             None => (std::ptr::null_mut(), 0),
         };
@@ -144,7 +161,25 @@ impl<'a> OSSLParam<'a> {
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#6](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/6))
+    /// ```rust
+    /// use openssl_provider_forge::osslparams::*;
+    /// use std::ffi::CStr;
+    ///
+    /// let key: &KeyType = c"my_key";
+    /// let value: &CStr = c"test value";
+    ///
+    /// // In case of "Some"
+    /// let param = OSSLParam::new_const_utf8string(&key, Some(&value));
+    ///
+    /// assert_eq!(param.data_type, OSSL_PARAM_UTF8_STRING);
+    /// assert_eq!(param.return_size, OSSL_PARAM_UNMODIFIED);
+    ///
+    /// // In case of "None"
+    /// let empty_param = OSSLParam::new_const_utf8string(&key, None);
+    /// assert!(empty_param.data.is_null());
+    /// assert_eq!(empty_param.data_size, 0);
+    ///
+    /// ```
     ///
     pub const fn new_const_utf8string(
         key: &'a KeyType,
@@ -180,7 +215,30 @@ impl<'a> OSSLParam<'a> {
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#6](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/6))
+    /// ```rust
+    /// use openssl_provider_forge::osslparams::*;
+    ///
+    /// let key: &KeyType = c"int_key";
+    /// let value: i32 = 12;
+    ///
+    /// // In case of "Some"
+    /// let param = OSSLParam::new_const_int(&key, Some(&value));
+    ///
+    /// assert_eq!(param.data_type, OSSL_PARAM_INTEGER);
+    /// assert_eq!(param.return_size, OSSL_PARAM_UNMODIFIED);
+    ///
+    /// // Checks if the pointer stored in the [CONST_OSSL_PARAM] is not null
+    /// assert!(!param.data.is_null());
+    ///
+    /// // Checks bytes size
+    /// assert_eq!(param.data_size, std::mem::size_of::<i32>());
+    ///
+    /// // In case of "None"
+    /// let empty_param = OSSLParam::new_const_int::<i32>(&key, None);
+    /// assert!(empty_param.data.is_null());
+    /// assert_eq!(empty_param.data_size, 0);
+    ///
+    /// ```
     ///
     pub const fn new_const_int<T>(key: &'a KeyType, value: Option<&'a T>) -> CONST_OSSL_PARAM
     where
@@ -216,7 +274,30 @@ impl<'a> OSSLParam<'a> {
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#6](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/6))
+    /// ```rust
+    /// use openssl_provider_forge::osslparams::*;
+    ///
+    /// let key: &KeyType = c"uint_key";
+    /// let value: u32 = 12;
+    ///
+    /// // In case of "Some"
+    /// let param = OSSLParam::new_const_uint(&key, Some(&value));
+    ///
+    /// assert_eq!(param.data_type, OSSL_PARAM_UNSIGNED_INTEGER);
+    /// assert_eq!(param.return_size, OSSL_PARAM_UNMODIFIED);
+    ///
+    /// // Checks if the pointer stored in the [CONST_OSSL_PARAM] is not null
+    /// assert!(!param.data.is_null());
+    ///
+    /// // Checks bytes size
+    /// assert_eq!(param.data_size, std::mem::size_of::<u32>());
+    ///
+    /// // In case of "None"
+    /// let empty_param = OSSLParam::new_const_uint::<u32>(&key, None);
+    /// assert!(empty_param.data.is_null());
+    /// assert_eq!(empty_param.data_size, 0);
+    ///
+    /// ```
     ///
     pub const fn new_const_uint<T>(key: &'a KeyType, value: Option<&'a T>) -> CONST_OSSL_PARAM
     where
@@ -252,7 +333,37 @@ impl<'a> OSSLParam<'a> {
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#6](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/6))
+    /// ```rust
+    /// use openssl_provider_forge::osslparams::*;
+    /// use std::ffi::CString;
+    /// use std::os::raw::c_char;
+    ///
+    /// let key: &KeyType = c"octet_key";
+    ///
+    /// // Some bytes we want to pass as an octet string
+    /// let value = CString::new("hello").unwrap();
+    /// let bytes = value.as_bytes_with_nul();
+    ///
+    // // Convert &[u8] to &[c_char] so it matches the function signature
+    /// let bytes_cchar: &[c_char] = unsafe {std::slice::from_raw_parts(bytes.as_ptr() as *const c_char, bytes.len())};
+    ///
+    /// // In case of Some
+    /// let param = OSSLParam::new_const_octetstring(&key, Some(bytes_cchar));
+    ///
+    /// assert_eq!(param.data_type, OSSL_PARAM_OCTET_STRING);
+    /// assert_eq!(param.return_size, OSSL_PARAM_UNMODIFIED);
+    ///
+    /// // Checks if the pointer stored in the [CONST_OSSL_PARAM] is not null
+    /// assert!(!param.data.is_null());
+    ///
+    /// // Checks bytes size
+    /// assert_eq!(param.data_size, bytes.len());
+    ///
+    /// // In case of "None"
+    /// let empty_param = OSSLParam::new_const_octetstring(&key, None);
+    /// assert!(empty_param.data.is_null());
+    /// assert_eq!(empty_param.data_size, 0);
+    /// ```
     ///
     pub const fn new_const_octetstring(
         key: &'a KeyType,
