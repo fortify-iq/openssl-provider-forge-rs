@@ -519,7 +519,29 @@ impl<'a> OSSLParam<'a> {
     ///
     /// # Examples
     ///
-    /// ## TODO(🛠️): add examples (tracked by: [#7](https://gitlab.com/nisec/qubip/openssl-provider-forge-rs/-/issues/7))
+    /// ```rust
+    /// use openssl_provider_forge::osslparams::*;
+    /// use openssl_provider_forge::bindings::OSSL_PARAM;
+    ///
+    /// # let x = 42;
+    /// # let my_external_param = OSSLParam::new_const_int(c"arbitrary_key", Some(&x));
+    /// # let EXTERNAL_OSSL_PARAM_PTR: *const OSSL_PARAM = std::ptr::from_ref(&my_external_param).cast();
+    ///
+    /// // EXTERNAL_OSSL_PARAM_PTR is a `*OSSL_PARAM`, from which
+    /// // we create a "rich" OSSLParam Rust object (i.e., `my_param`).
+    /// // We can then safely manipulate `my_param` using Rust methods.
+    /// let mut param = OSSLParam::try_from(EXTERNAL_OSSL_PARAM_PTR).unwrap();
+    ///
+    /// // Update the value stored inside the parameter using set()
+    /// param.set::<i64>(24).unwrap();
+    ///
+    /// // Verify that the new value is accessible using get()
+    ///
+    ///  let value = param.get::<i32>().unwrap();
+    ///  assert_eq!(value, 24);
+    ///  println!("Updated value: {}", value);
+    ///
+    /// ```
     ///
     pub fn set<T>(&mut self, value: T) -> Result<(), OSSLParamError>
     where
