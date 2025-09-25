@@ -1,27 +1,22 @@
-<div align="center">
+# `openssl_provider_forge`
 
-  `openssl_provider_forge`
+[![crate][crate-image]][crate-link]
+[![Docs][docs-image]][docs-link]
+[![Build Status][build-image]][build-link]
+![Apache2 licensed][license-image]
+![MSRV][rustc-image]
 
-  <br />
-  <a href="#about"><strong>Explore the docs »</strong></a>
-  <br />
-  <br />
-  <a href="https://github.com/qubip/openssl-provider-forge-rs/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
-  ·
-  <a href="https://github.com/qubip/openssl-provider-forge-rs/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+">Request a Feature</a>
-  ·
-  <a href="https://github.com/qubip/openssl-provider-forge-rs/issues/new?assignees=&labels=question&template=04_SUPPORT_QUESTION.md&title=support%3A+">Ask a Question</a>
-</div>
 
-<div align="center">
-<br />
+[Report a Bug](https://github.com/qubip/openssl-provider-forge-rs/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+)
+·
+[Request a Feature](https://github.com/qubip/openssl-provider-forge-rs/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feat%3A+)
+·
+[Ask a Question](https://github.com/qubip/openssl-provider-forge-rs/issues/new?assignees=&labels=question&template=04_SUPPORT_QUESTION.md&title=support%3A+)
 
-[![Project license](https://img.shields.io/github/license/qubip/openssl-provider-forge-rs.svg?style=flat-square)][LICENSE]
 
 [![Pull Requests welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg?style=flat-square)](https://github.com/qubip/openssl-provider-forge-rs/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22)
 [![code with love by qubip](https://img.shields.io/badge/%3C%2F%3E%20with%20%E2%99%A5%20by-qubip%2Fnisec-ff1414.svg?style=flat-square)](https://github.com/orgs/QUBIP/teams/nisec)
 
-</div>
 
 > [!CAUTION]
 >
@@ -197,3 +192,15 @@ See [LICENSE][LICENSE] for more information.
 This work has been developed within the QUBIP project (<https://www.qubip.eu>),
 funded by the European Union under the Horizon Europe framework programme
 [grant agreement no. 101119746](https://doi.org/10.3030/101119746).
+
+
+[crate-image]: https://img.shields.io/crates/v/openssl_provider_forge?logo=rust
+[crate-link]: https://crates.io/crates/openssl_provider_forge
+[docs-image]: https://docs.rs/openssl_provider_forge/badge.svg
+[docs-link]: https://docs.rs/openssl_provider_forge/
+[build-image]: https://img.shields.io/badge/build-not_automated_yet-red "not automated yet"
+[build-link]: # "not automated yet"
+[license-image]: https://img.shields.io/badge/license-Apache2.0-blue.svg
+[rustc-image]: https://img.shields.io/badge/rustc-1.85+-blue.svg
+[//]: # "links"
+
