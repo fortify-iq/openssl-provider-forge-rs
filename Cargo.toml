@@ -5,6 +5,7 @@ edition = "2021"
 description = "Rust crate with FFI binding for the `Core` and `Provider` APIs of `OpenSSL 3.2+`"
 license = "Apache-2.0"
 repository = "https://github.com/QUBIP/openssl-provider-forge-rs"
+homepage = "https://qubip.eu"
 
 [dependencies]
 anyhow = "1.0.94"
