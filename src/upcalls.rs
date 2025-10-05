@@ -24,9 +24,11 @@ pub struct OSSL_CORE_HANDLE {
 pub mod traits {
     use super::*;
     use crate::bindings::{
-        OSSL_CORE_BIO, OSSL_FUNC_BIO_READ_EX, OSSL_FUNC_BIO_WRITE_EX, OSSL_FUNC_CORE_OBJ_ADD_SIGID,
-        OSSL_FUNC_CORE_OBJ_CREATE,
+        OSSL_FUNC_core_get_params_fn, OSSL_FUNC_core_gettable_params_fn, OSSL_CORE_BIO,
+        OSSL_FUNC_BIO_READ_EX, OSSL_FUNC_BIO_WRITE_EX, OSSL_FUNC_CORE_GETTABLE_PARAMS,
+        OSSL_FUNC_CORE_GET_PARAMS, OSSL_FUNC_CORE_OBJ_ADD_SIGID, OSSL_FUNC_CORE_OBJ_CREATE,
     };
+    use crate::osslparams::OSSLParam;
     pub(crate) use ::function_name::named;
     use anyhow::anyhow;
     use std::ffi::{c_char, c_int, c_void, CStr};
@@ -349,6 +351,70 @@ pub mod traits {
             match ret {
                 RET_SUCCESS => Ok(()),
                 RET_FAILURE => Err(anyhow!("core_obj_add_sigid() upcall failed")),
+                _ => unreachable!(),
+            }
+        }
+
+        /// See https://docs.openssl.org/3.2/man7/provider-base/#description
+        #[expect(non_snake_case)]
+        #[named]
+        fn CORE_gettable_params(&self) -> Result<OSSLParam, crate::OurError> {
+            trace!(target: log_target!(), "Called");
+            let handle = self.get_core_handle();
+
+            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
+            let fn_ptr =
+                CELL.get_or_init(|| self.fn_from_core_dispatch(OSSL_FUNC_CORE_GETTABLE_PARAMS));
+            let fn_ptr = match fn_ptr {
+                Some(f) => (*f) as *const c_void,
+                None => {
+                    return Err(anyhow::anyhow!("No upcall pointer"));
+                }
+            };
+            let ffi_core_gettable_params: OSSL_FUNC_core_gettable_params_fn =
+                unsafe { std::mem::transmute(fn_ptr) };
+
+            let ret = unsafe {
+                let handle: *const crate::bindings::OSSL_CORE_HANDLE = std::mem::transmute(handle);
+                let f = ffi_core_gettable_params.unwrap();
+                f(handle)
+            };
+            let p = OSSLParam::try_from(ret);
+            p.map_err(|e| anyhow::anyhow!("{e:}"))
+        }
+
+        /// See https://docs.openssl.org/3.2/man7/provider-base/#description
+        #[expect(non_snake_case)]
+        #[named]
+        fn CORE_get_params(&self, mut params: OSSLParam) -> Result<(), crate::OurError> {
+            trace!(target: log_target!(), "Called");
+            let handle = self.get_core_handle();
+
+            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
+            let fn_ptr = CELL.get_or_init(|| self.fn_from_core_dispatch(OSSL_FUNC_CORE_GET_PARAMS));
+            let fn_ptr = match fn_ptr {
+                Some(f) => (*f) as *const c_void,
+                None => {
+                    return Err(anyhow::anyhow!("No upcall pointer"));
+                }
+            };
+            let ffi_core_get_params: OSSL_FUNC_core_get_params_fn =
+                unsafe { std::mem::transmute(fn_ptr) };
+
+            let ret = unsafe {
+                let handle: *const crate::bindings::OSSL_CORE_HANDLE = std::mem::transmute(handle);
+                let params = params.get_c_struct_mut();
+                let f = ffi_core_get_params.unwrap();
+                f(handle, params)
+            };
+
+            /// Refer to [provider-base(7ossl)](https://docs.openssl.org/3.2/man7/provider-base/#core-functions)
+            const RET_SUCCESS: c_int = 1;
+            const RET_FAILURE: c_int = 0;
+
+            match ret {
+                RET_SUCCESS => Ok(()),
+                RET_FAILURE => Err(anyhow!("core_get_params() upcall failed")),
                 _ => unreachable!(),
             }
         }
