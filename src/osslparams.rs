@@ -11,6 +11,7 @@ use std::{
 
 // We re-export related definitions from the FFI bindings, as they are generally
 // of use to users of this module.
+#[allow(non_snake_case)]
 pub use crate::bindings::{
     OSSL_PARAM, OSSL_PARAM_INTEGER, OSSL_PARAM_OCTET_STRING, OSSL_PARAM_UNMODIFIED,
     OSSL_PARAM_UNSIGNED_INTEGER, OSSL_PARAM_UTF8_PTR, OSSL_PARAM_UTF8_STRING,
