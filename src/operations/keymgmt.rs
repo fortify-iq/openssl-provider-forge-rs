@@ -105,8 +105,7 @@ pub mod selection {
             match Selection::from_bits(value) {
                 Some(s) => Ok(s),
                 None => Err(anyhow::anyhow!(
-                    "Invalid OSSL_KEYMGMT_SELECT flag value: {:?}",
-                    value
+                    "Invalid OSSL_KEYMGMT_SELECT flag value: {value:?}"
                 )),
             }
         }

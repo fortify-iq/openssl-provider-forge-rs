@@ -43,17 +43,17 @@ pub trait AsOsslParamPtr {
 
 impl AsOsslParamPtr for [CONST_OSSL_PARAM] {
     fn as_ossl_param_ptr(&self) -> *const OSSL_PARAM {
-        self.as_ptr() as *const OSSL_PARAM
+        self.as_ptr().cast::<OSSL_PARAM>()
     }
 }
 impl AsOsslParamPtr for [OSSL_PARAM] {
     fn as_ossl_param_ptr(&self) -> *const OSSL_PARAM {
-        self.as_ptr() as *const OSSL_PARAM
+        self.as_ptr().cast::<OSSL_PARAM>()
     }
 }
 impl<const N: usize> AsOsslParamPtr for [CONST_OSSL_PARAM; N] {
     fn as_ossl_param_ptr(&self) -> *const OSSL_PARAM {
-        self.as_ptr() as *const OSSL_PARAM
+        self.as_ptr().cast::<OSSL_PARAM>()
     }
 }
 impl<const N: usize> AsOsslParamPtr for [OSSL_PARAM; N] {

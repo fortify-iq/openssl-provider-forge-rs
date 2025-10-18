@@ -2,6 +2,21 @@
 //! [!NOTE]: # "ℹ️ NOTE"
 //! [!CAUTION]: # "⚠️ CAUTION"
 #![doc = include_str!("../README.md")]
+//!
+//! # FFI Safety (OpenSSL)
+//!
+//! Many of the fucntions exposed by this crate dereference raw pointers
+//! received from the OpenSSL FFI.
+//! When functions dereference raw pointers they should be marked as `unsafe` in
+//! Rust, and instruct the caller on safety requirements.
+//!
+//! Such functions in most cases reference this section to describe the safety requirements.
+//!
+//! The caller of any of these functions must ensure that the raw pointers:
+//! - originate from OpenSSL,
+//! - are properly aligned, non-dangling, and readable/writable as required,
+//! - remain valid for the duration of the call,
+//! - respects OpenSSL aliasing/lifetime invariants as required.
 
 pub mod bindings;
 pub mod capabilities;
@@ -92,10 +107,8 @@ pub enum TLSVersion {
 impl PartialOrd for TLSVersion {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
-            (TLSVersion::None, _) => None,
-            (TLSVersion::Disabled, _) => None,
-            (_, TLSVersion::None) => None,
-            (_, TLSVersion::Disabled) => None,
+            (TLSVersion::None | TLSVersion::Disabled, _)
+            | (_, TLSVersion::None | TLSVersion::Disabled) => None,
             (&s, &o) => {
                 let (s, o): (i32, i32) = (s.into(), o.into());
                 Some(s.cmp(&o))
@@ -168,10 +181,8 @@ pub enum DTLSVersion {
 impl PartialOrd for DTLSVersion {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         match (self, other) {
-            (DTLSVersion::None, _) => None,
-            (DTLSVersion::Disabled, _) => None,
-            (_, DTLSVersion::None) => None,
-            (_, DTLSVersion::Disabled) => None,
+            (DTLSVersion::None | DTLSVersion::Disabled, _)
+            | (_, DTLSVersion::None | DTLSVersion::Disabled) => None,
             (&s, &o) => {
                 let (s, o): (i32, i32) = (s.into(), o.into());
                 // Reverse ordering otherwise

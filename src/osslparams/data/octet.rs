@@ -18,7 +18,7 @@ impl OSSLParamData for OctetStringData<'_> {
         let param_data = new_null_param!(OctetStringData, OSSL_PARAM_OCTET_STRING, key);
         let bufsize = 1024;
         let buf = Box::into_raw(vec![0u8; bufsize].into_boxed_slice());
-        param_data.param.data = buf as *mut std::ffi::c_void;
+        param_data.param.data = buf.cast::<std::ffi::c_void>();
         param_data.param.data_size = bufsize;
         param_data
     }
@@ -64,7 +64,7 @@ impl<'a> TypedOSSLParamData<&'a [u8]> for OctetStringData<'_> {
         }
         // Set the inner contents of the param
         unsafe {
-            std::ptr::copy(value.as_ptr(), p.data as *mut u8, len);
+            std::ptr::copy(value.as_ptr(), p.data.cast::<u8>(), len);
         };
         Ok(())
     }
@@ -73,7 +73,7 @@ impl<'a> TypedOSSLParamData<&'a [u8]> for OctetStringData<'_> {
 impl TryFrom<*mut OSSL_PARAM> for OctetStringData<'_> {
     type Error = OSSLParamError;
 
-    /// Converts a raw OpenSSL parameter (`OSSL_PARAM`) to an `OSSLParam` enum variant (OctetStringData).
+    /// Converts a raw OpenSSL parameter (`OSSL_PARAM`) to an `OSSLParam` enum variant (`OctetStringData`).
     /// Ensures the pointer is not null and that the `data_type` matches an expected OpenSSL parameter type.
     /// # Examples
     ///
@@ -95,10 +95,10 @@ impl TryFrom<*mut OSSL_PARAM> for OctetStringData<'_> {
     fn try_from(param: *mut OSSL_PARAM) -> Result<Self, Self::Error> {
         match unsafe { param.as_mut() } {
             Some(param) => {
-                if param.data_type != OSSL_PARAM_OCTET_STRING {
-                    Err("tried to make OctetStringData from OSSL_PARAM with data_type != OSSL_PARAM_OCTET_STRING".to_string())
-                } else {
+                if param.data_type == OSSL_PARAM_OCTET_STRING {
                     Ok(OctetStringData { param })
+                } else {
+                    Err("tried to make OctetStringData from OSSL_PARAM with data_type != OSSL_PARAM_OCTET_STRING".to_string())
                 }
             }
             None => Err("tried to make OctetStringData from null pointer".to_string()),

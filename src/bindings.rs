@@ -10,15 +10,17 @@
 
 // We encapsulate the output of bindgen in a inner module, so we can
 // disable clippy and other lints for the generated code
-#[allow(clippy::all)]
-#[allow(non_upper_case_globals)]
-#[allow(non_camel_case_types)]
-#[allow(non_snake_case)]
-#[allow(dead_code)]
 mod inner_bindings {
+    #![allow(clippy::all)]
+    #![allow(clippy::unreadable_literal)]
+    #![allow(clippy::pub_underscore_fields)]
+    #![allow(non_upper_case_globals)]
+    #![allow(non_camel_case_types)]
+    #![allow(non_snake_case)]
+    #![allow(dead_code)]
+
     #[cfg(feature = "regen")]
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-
     #[cfg(not(feature = "regen"))]
     include!("bindings/generated_bindings.rs");
 }
@@ -102,7 +104,7 @@ impl Default for OSSL_DISPATCH {
     }
 }
 
-/// A convenience macro to quickly declare a OSSL_DISPATCH table entry
+/// A convenience macro to quickly declare a `OSSL_DISPATCH` table entry
 #[macro_export]
 macro_rules! dispatch_table_entry {
     ( $f_id:expr, $f_type:ty, $f_name:expr ) => {{

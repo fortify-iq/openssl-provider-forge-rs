@@ -11,7 +11,6 @@ use std::{
 
 // We re-export related definitions from the FFI bindings, as they are generally
 // of use to users of this module.
-#[allow(non_snake_case)]
 pub use crate::bindings::{
     OSSL_PARAM, OSSL_PARAM_INTEGER, OSSL_PARAM_OCTET_STRING, OSSL_PARAM_UNMODIFIED,
     OSSL_PARAM_UNSIGNED_INTEGER, OSSL_PARAM_UTF8_PTR, OSSL_PARAM_UTF8_STRING,
@@ -319,7 +318,7 @@ impl<'a> OSSLParam<'a> {
         CONST_OSSL_PARAM {
             key: key.as_ptr().cast(),
             data_type: OSSL_PARAM_UNSIGNED_INTEGER,
-            data: data as *mut std::ffi::c_void,
+            data: data.cast::<std::ffi::c_void>(),
             data_size,
             return_size: OSSL_PARAM_UNMODIFIED,
         }
@@ -409,7 +408,7 @@ pub struct Utf8StringData<'a> {
 
 impl std::fmt::Debug for Utf8StringData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let p = OSSLParam::try_from(self.param as *const OSSL_PARAM);
+        let p = OSSLParam::try_from(std::ptr::from_ref::<OSSL_PARAM>(self.param));
         match p {
             Ok(p) => {
                 let v: Option<&CStr> = p.get();
@@ -435,7 +434,7 @@ pub struct IntData<'a> {
 
 impl std::fmt::Debug for IntData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let p = OSSLParam::try_from(self.param as *const OSSL_PARAM);
+        let p = OSSLParam::try_from(std::ptr::from_ref::<OSSL_PARAM>(self.param));
         match p {
             Ok(p) => {
                 let v: Option<i64> = p.get();
@@ -461,7 +460,7 @@ pub struct UIntData<'a> {
 
 impl std::fmt::Debug for UIntData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let p = OSSLParam::try_from(self.param as *const OSSL_PARAM);
+        let p = OSSLParam::try_from(std::ptr::from_ref::<OSSL_PARAM>(self.param));
         match p {
             Ok(p) => {
                 let v: Option<u64> = p.get();
@@ -513,7 +512,7 @@ pub type OSSLParamError = String;
 /// ```
 pub type KeyType = CStr;
 
-impl<'a> OSSLParam<'a> {
+impl OSSLParam<'_> {
     /// Sets the value of the [`OSSLParam`] to the provided value of type `T`.
     ///
     /// Updates the [`OSSLParam`] to store the given value, adjusting the return size accordingly.
@@ -712,7 +711,7 @@ impl<'a> OSSLParam<'a> {
     ///
     /// * Returns `Some(data_type: u32)` for valid [`OSSLParam`] references.
     /// * Returns `None` if the [`OSSLParam`] reference is null or if it is
-    /// [`OSSL_PARAM_END`].
+    ///   [`OSSL_PARAM_END`].
     ///
     /// The latter should never happen in normal use, because
     /// [`OSSLParam::try_from`] only succeeds when called on a struct that
@@ -861,8 +860,8 @@ impl<'a> OSSLParam<'a> {
     ///
     /// ```
     fn variant_name(&self) -> String {
-        let s = format!("{:?}", self);
-        s.split("(")
+        let s = format!("{self:?}");
+        s.split('(')
             .next()
             .unwrap_or_else(|| unreachable!())
             .to_owned()
@@ -988,7 +987,7 @@ macro_rules! new_null_param {
             param: Box::leak(Box::new(crate::bindings::OSSL_PARAM {
                 key: $key.as_ptr().cast(),
                 data_type: $data_type,
-                data: std::ptr::null::<std::ffi::c_void>() as *mut std::ffi::c_void,
+                data: std::ptr::null_mut::<std::ffi::c_void>(),
                 data_size: 0,
                 return_size: 0,
             })),
@@ -1012,14 +1011,14 @@ macro_rules! impl_setter {
 }
 pub(crate) use impl_setter;
 
-impl<'a> TryFrom<&mut OSSL_PARAM> for OSSLParam<'a> {
+impl TryFrom<&mut OSSL_PARAM> for OSSLParam<'_> {
     type Error = OSSLParamError;
     fn try_from(value: &mut OSSL_PARAM) -> Result<Self, Self::Error> {
-        OSSLParam::try_from(value as *mut OSSL_PARAM)
+        OSSLParam::try_from(std::ptr::from_mut::<OSSL_PARAM>(value))
     }
 }
 
-impl<'a> TryFrom<&CONST_OSSL_PARAM> for OSSLParam<'a> {
+impl TryFrom<&CONST_OSSL_PARAM> for OSSLParam<'_> {
     type Error = OSSLParamError;
     fn try_from(value: &CONST_OSSL_PARAM) -> Result<Self, Self::Error> {
         let ptr = std::ptr::from_ref(value);
@@ -1028,7 +1027,7 @@ impl<'a> TryFrom<&CONST_OSSL_PARAM> for OSSLParam<'a> {
 }
 
 /// Converts a mutable raw pointer ([`*mut OSSL_PARAM`][`OSSL_PARAM`]) into an [`OSSLParam`] enum.
-impl<'a> TryFrom<*mut OSSL_PARAM> for OSSLParam<'a> {
+impl TryFrom<*mut OSSL_PARAM> for OSSLParam<'_> {
     type Error = OSSLParamError;
     /// Ensures the pointer is not null and that the `data_type` matches an expected OpenSSL parameter type.
     ///
@@ -1103,17 +1102,23 @@ impl<'a> TryFrom<*mut OSSL_PARAM> for OSSLParam<'a> {
         match unsafe { p.as_mut() } {
             Some(p) => match p.data_type {
                 OSSL_PARAM_UTF8_PTR => Ok(OSSLParam::Utf8Ptr(Utf8PtrData::try_from(
-                    p as *mut OSSL_PARAM,
+                    std::ptr::from_mut::<OSSL_PARAM>(p),
                 )?)),
                 OSSL_PARAM_UTF8_STRING => Ok(OSSLParam::Utf8String(Utf8StringData::try_from(
-                    p as *mut OSSL_PARAM,
+                    std::ptr::from_mut::<OSSL_PARAM>(p),
                 )?)),
-                OSSL_PARAM_INTEGER => Ok(OSSLParam::Int(IntData::try_from(p as *mut OSSL_PARAM)?)),
+                OSSL_PARAM_INTEGER => Ok(OSSLParam::Int(IntData::try_from(std::ptr::from_mut::<
+                    OSSL_PARAM,
+                >(p))?)),
                 OSSL_PARAM_UNSIGNED_INTEGER => {
-                    Ok(OSSLParam::UInt(UIntData::try_from(p as *mut OSSL_PARAM)?))
+                    Ok(OSSLParam::UInt(UIntData::try_from(std::ptr::from_mut::<
+                        OSSL_PARAM,
+                    >(
+                        p
+                    ))?))
                 }
                 OSSL_PARAM_OCTET_STRING => Ok(OSSLParam::OctetString(OctetStringData::try_from(
-                    p as *mut OSSL_PARAM,
+                    std::ptr::from_mut::<OSSL_PARAM>(p),
                 )?)),
                 _ => Err("Couldn't convert to OSSLParam from *mut OSSL_PARAM".to_string()),
             },
@@ -1123,7 +1128,7 @@ impl<'a> TryFrom<*mut OSSL_PARAM> for OSSLParam<'a> {
 }
 
 /// Converts a raw pointer ([`*const OSSL_PARAM`][`OSSL_PARAM`]) into an [`OSSLParam`] enum.
-impl<'a> TryFrom<*const OSSL_PARAM> for OSSLParam<'a> {
+impl TryFrom<*const OSSL_PARAM> for OSSLParam<'_> {
     type Error = OSSLParamError;
 
     /// Ensures the pointer is not null and that the `data_type` matches an expected OpenSSL parameter type.
@@ -1195,7 +1200,7 @@ impl<'a> TryFrom<*const OSSL_PARAM> for OSSLParam<'a> {
     /// ```
     ///
     fn try_from(p: *const OSSL_PARAM) -> std::result::Result<Self, Self::Error> {
-        let m = p as *mut OSSL_PARAM;
+        let m = p.cast_mut();
         OSSLParam::try_from(m)
     }
 }
@@ -1203,11 +1208,11 @@ impl<'a> TryFrom<*const OSSL_PARAM> for OSSLParam<'a> {
 impl<'a> From<&mut OSSLParam<'a>> for *mut OSSL_PARAM {
     fn from(val: &mut OSSLParam<'a>) -> Self {
         match val {
-            OSSLParam::Utf8Ptr(d) => d.param as *mut OSSL_PARAM,
-            OSSLParam::Utf8String(d) => d.param as *mut OSSL_PARAM,
-            OSSLParam::Int(d) => d.param as *mut OSSL_PARAM,
-            OSSLParam::UInt(d) => d.param as *mut OSSL_PARAM,
-            OSSLParam::OctetString(d) => d.param as *mut OSSL_PARAM,
+            OSSLParam::Utf8Ptr(d) => std::ptr::from_mut::<OSSL_PARAM>(d.param),
+            OSSLParam::Utf8String(d) => std::ptr::from_mut::<OSSL_PARAM>(d.param),
+            OSSLParam::Int(d) => std::ptr::from_mut::<OSSL_PARAM>(d.param),
+            OSSLParam::UInt(d) => std::ptr::from_mut::<OSSL_PARAM>(d.param),
+            OSSLParam::OctetString(d) => std::ptr::from_mut::<OSSL_PARAM>(d.param),
         }
     }
 }
@@ -1215,11 +1220,11 @@ impl<'a> From<&mut OSSLParam<'a>> for *mut OSSL_PARAM {
 impl<'a> From<&OSSLParam<'a>> for *const OSSL_PARAM {
     fn from(val: &OSSLParam<'a>) -> Self {
         match val {
-            OSSLParam::Utf8Ptr(d) => d.param as *const OSSL_PARAM,
-            OSSLParam::Utf8String(d) => d.param as *const OSSL_PARAM,
-            OSSLParam::Int(d) => d.param as *const OSSL_PARAM,
-            OSSLParam::UInt(d) => d.param as *const OSSL_PARAM,
-            OSSLParam::OctetString(d) => d.param as *const OSSL_PARAM,
+            OSSLParam::Utf8Ptr(d) => std::ptr::from_ref::<OSSL_PARAM>(d.param),
+            OSSLParam::Utf8String(d) => std::ptr::from_ref::<OSSL_PARAM>(d.param),
+            OSSLParam::Int(d) => std::ptr::from_ref::<OSSL_PARAM>(d.param),
+            OSSLParam::UInt(d) => std::ptr::from_ref::<OSSL_PARAM>(d.param),
+            OSSLParam::OctetString(d) => std::ptr::from_ref::<OSSL_PARAM>(d.param),
         }
     }
 }
@@ -1247,11 +1252,11 @@ impl OSSL_PARAM {
     };
 }
 
-/// Provides an end-of-parameter list marker for [OSSL_PARAM] arrays
+/// Provides an end-of-parameter list marker for [`OSSL_PARAM`] arrays
 /// to terminate them.
 pub const OSSL_PARAM_END: OSSL_PARAM = OSSL_PARAM::END;
 
-/// A single-element array containing the [OSSL_PARAM_END] marker.
+/// A single-element array containing the [`OSSL_PARAM_END`] marker.
 /// Used to represent an empty parameter list in OpenSSL operations.
 pub const EMPTY_PARAMS: [OSSL_PARAM; 1] = [OSSL_PARAM_END];
 
@@ -1349,7 +1354,7 @@ pub struct OSSLParamIterator<'a> {
 impl OSSLParamIterator<'_> {
     fn new(ptr: *const OSSL_PARAM) -> Self {
         OSSLParamIterator {
-            ptr: ptr as *mut OSSL_PARAM,
+            ptr: ptr.cast_mut(),
             phantom: PhantomData,
         }
     }
@@ -1369,7 +1374,7 @@ impl<'a> Iterator for OSSLParamIterator<'a> {
                 self.ptr = unsafe { self.ptr.offset(1) };
                 param.ok()
             }
-            None => return None,
+            None => None,
         }
     }
 }
@@ -1583,14 +1588,14 @@ impl std::ops::Deref for CONST_OSSL_PARAM {
     fn deref(&self) -> &Self::Target {
         let ptr: *const Self = std::ptr::from_ref(self);
         assert!(!ptr.is_null());
-        let ptr: *const Self::Target = ptr as *const Self::Target;
+        let ptr: *const Self::Target = ptr.cast::<Self::Target>();
         unsafe { &*ptr }
     }
 }
 
 impl From<&CONST_OSSL_PARAM> for *const OSSL_PARAM {
     fn from(param: &CONST_OSSL_PARAM) -> Self {
-        param as *const CONST_OSSL_PARAM as *const OSSL_PARAM
+        std::ptr::from_ref::<CONST_OSSL_PARAM>(param).cast::<OSSL_PARAM>()
     }
 }
 

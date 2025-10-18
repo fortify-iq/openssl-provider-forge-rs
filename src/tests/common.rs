@@ -16,6 +16,7 @@ fn try_init_logging() -> Result<(), OurError> {
         .map_err(OurError::from)
 }
 
+#[allow(clippy::unnecessary_wraps)]
 pub(crate) fn setup() -> Result<(), OurError> {
     INIT.call_once(|| {
         try_init_logging().expect("Failed to initialize the logging system");

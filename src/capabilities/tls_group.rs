@@ -60,7 +60,7 @@ use crate::osslparams::*;
 /// method (KEM) during a TLS handshake.
 ///
 /// TLS clients can advertise the list of TLS groups they support in the
-/// supported_groups extension, and TLS servers can select a group from the
+/// `supported_groups` extension, and TLS servers can select a group from the
 /// offered list that they also support.
 ///
 /// In this way a provider can add to the list of groups that `libssl` already

@@ -10,7 +10,7 @@ fn test_int_data() {
     let mut storage: i64 = 0;
     let mut int_data = IntData {
         param: &mut OSSL_PARAM {
-            data: &mut storage as *mut i64 as *mut std::ffi::c_void,
+            data: (&raw mut storage).cast::<std::ffi::c_void>(),
             return_size: 0,
             data_type: OSSL_PARAM_INTEGER,
             key: ptr::null(),
@@ -32,7 +32,7 @@ fn test_uint_data() {
     let mut storage: u64 = 0;
     let mut uint_data = UIntData {
         param: &mut OSSL_PARAM {
-            data: &mut storage as *mut u64 as *mut std::ffi::c_void,
+            data: (&raw mut storage).cast::<std::ffi::c_void>(),
             return_size: 0,
             data_type: OSSL_PARAM_UNSIGNED_INTEGER,
             key: ptr::null(),
@@ -61,7 +61,7 @@ fn test_utf8_ptr_data_set() {
 
     // Allocate memory for a pointer that will store the UTF-8 string
     let mut pointer_to_utf8: *const i8 = std::ptr::null();
-    ossl_param.data = &mut pointer_to_utf8 as *mut *const i8 as *mut std::ffi::c_void;
+    ossl_param.data = (&raw mut pointer_to_utf8).cast::<std::ffi::c_void>();
 
     // Create an instance of Utf8PtrData pointing to the dummy OSSL_PARAM
     let mut utf8_data = Utf8PtrData {
@@ -84,7 +84,7 @@ fn test_utf8_ptr_data_set() {
     );
     assert_eq!(
         pointer_to_utf8,
-        value.as_ptr() as *const i8,
+        value.as_ptr().cast::<i8>(),
         "Incorrect UTF-8 data pointer"
     );
 

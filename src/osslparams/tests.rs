@@ -26,25 +26,25 @@ mod generic {
             return_size: OSSL_PARAM_UNMODIFIED,
             key: ptr::null(),
         };
-        let result = IntData::try_from(&mut ossl_param as *mut OSSL_PARAM);
+        let result = IntData::try_from(&raw mut ossl_param);
         log::trace!("IntData::try_from returned: {result:?}");
         // Check that the result is Ok and properly returns IntData
         assert!(result.is_ok());
 
         ossl_param.data_type = 0;
-        let result = IntData::try_from(&mut ossl_param as *mut OSSL_PARAM);
+        let result = IntData::try_from(&raw mut ossl_param);
         log::trace!("(expected an error) {result:?}");
         assert!(result.is_err());
 
         let k = c"test_key";
         let op_utf8str = OSSLParam::new_const_utf8string(k, Some(c"test_value"));
         let t: *const OSSL_PARAM = std::ptr::from_ref(&op_utf8str);
-        let result = Utf8StringData::try_from(t as *mut OSSL_PARAM);
+        let result = Utf8StringData::try_from(t.cast_mut());
         log::trace!("{result:?}");
         // Check that the result is Ok
         assert!(result.is_ok());
 
-        let op = OSSLParam::try_from(t as *mut OSSL_PARAM);
+        let op = OSSLParam::try_from(t.cast_mut());
         assert!(op.is_ok());
         let op = op.unwrap();
         log::trace!("{op:?}");
@@ -54,9 +54,9 @@ mod generic {
     }
 
     #[test]
-    /// This tests duplicates an `ignored` doctest in the documentation for variant_name()
+    /// This tests duplicates an `ignored` doctest in the documentation for `variant_name()`
     ///
-    /// variant_name() is a private method, so we cannot test it in doctests, but we want
+    /// `variant_name()` is a private method, so we cannot test it in doctests, but we want
     /// to keep there a valid example, therefore we test it here.
     ///
     /// If this test breaks, please fix also the corresponding example in the doccomment.
@@ -68,14 +68,14 @@ mod generic {
 
         let variant = param.variant_name();
 
-        println!("Variant name: {}", variant); // Outputs: "Int"
+        println!("Variant name: {variant}"); // Outputs: "Int"
         assert_eq!(variant, "Int");
     }
 
     #[test]
-    /// This tests duplicates an `ignored` doctest in the documentation for variant_name()
+    /// This tests duplicates an `ignored` doctest in the documentation for `variant_name()`
     ///
-    /// variant_name() is a private method, so we cannot test it in doctests, but we want
+    /// `variant_name()` is a private method, so we cannot test it in doctests, but we want
     /// to keep there a valid example, therefore we test it here.
     ///
     /// If this test breaks, please fix also the corresponding example in the doccomment.

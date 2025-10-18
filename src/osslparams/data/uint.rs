@@ -27,7 +27,7 @@ impl OSSLParamData for UIntData<'_> {
     {
         let param_data = new_null_param!(UIntData, OSSL_PARAM_UNSIGNED_INTEGER, key);
         let buf = Box::into_raw(Box::new(0u64));
-        param_data.param.data = buf as *mut std::ffi::c_void;
+        param_data.param.data = buf.cast::<std::ffi::c_void>();
         param_data.param.data_size = size_of::<u64>();
         param_data
     }
@@ -77,7 +77,7 @@ impl OSSLParamGetter<u64> for OSSLParam<'_> {
             };
             match d.param.data_size {
                 s if s == size_of::<u32>() => {
-                    Some(unsafe { std::ptr::read(data as *const u32) } as u64)
+                    Some(u64::from(unsafe { std::ptr::read(data as *const u32) }))
                 }
                 s if s == size_of::<u64>() => Some(unsafe { std::ptr::read(data as *const u64) }),
                 _ => None,
@@ -104,7 +104,7 @@ impl<T: PrimUIntMarker> TypedOSSLParamData<T> for UIntData<'_> {
                 s if s == size_of::<u32>() => {
                     if let Some(x) = value.to_u32() {
                         p.return_size = size_of::<u32>();
-                        unsafe { std::ptr::write(p.data as *mut u32, x) };
+                        unsafe { std::ptr::write(p.data.cast::<u32>(), x) };
                         Ok(())
                     } else {
                         Err("value could not be converted to u32".to_string())
@@ -112,7 +112,7 @@ impl<T: PrimUIntMarker> TypedOSSLParamData<T> for UIntData<'_> {
                 }
                 s if s == size_of::<u64>() => {
                     if let Some(x) = value.to_u64() {
-                        unsafe { std::ptr::write(p.data as *mut u64, x) };
+                        unsafe { std::ptr::write(p.data.cast::<u64>(), x) };
                         Ok(())
                     } else {
                         Err("value could not be converted to u64".to_string())
@@ -150,10 +150,10 @@ impl TryFrom<*mut OSSL_PARAM> for UIntData<'_> {
     fn try_from(param: *mut OSSL_PARAM) -> Result<Self, Self::Error> {
         match unsafe { param.as_mut() } {
             Some(param) => {
-                if param.data_type != OSSL_PARAM_UNSIGNED_INTEGER {
-                    Err("tried to make UIntData from OSSL_PARAM with data_type != OSSL_PARAM_UNSIGNED_INTEGER")
-                } else {
+                if param.data_type == OSSL_PARAM_UNSIGNED_INTEGER {
                     Ok(UIntData { param })
+                } else {
+                    Err("tried to make UIntData from OSSL_PARAM with data_type != OSSL_PARAM_UNSIGNED_INTEGER")
                 }
             }
             None => Err("tried to make UIntData from null pointer"),

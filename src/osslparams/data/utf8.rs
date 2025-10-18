@@ -32,7 +32,7 @@ impl OSSLParamData for Utf8StringData<'_> {
         let param_data = new_null_param!(Utf8StringData, OSSL_PARAM_UTF8_STRING, key);
         let bufsize = 1024;
         let buf = Box::into_raw(vec![0u8; bufsize].into_boxed_slice());
-        param_data.param.data = buf as *mut std::ffi::c_void;
+        param_data.param.data = buf.cast::<std::ffi::c_void>();
         param_data.param.data_size = bufsize;
         param_data
     }
@@ -95,7 +95,7 @@ impl TypedOSSLParamData<*const CStr> for Utf8PtrData<'_> {
             match unsafe { value.as_ref() } {
                 Some(cstr) => {
                     p.return_size = cstr.to_bytes().len();
-                    unsafe { *(p.data as *mut *const c_char) = cstr.as_ptr() };
+                    unsafe { *p.data.cast::<*const c_char>() = cstr.as_ptr() };
                 }
                 None => return Err("couldn't get &CStr from *const CStr".to_string()),
             }
@@ -124,7 +124,7 @@ impl TypedOSSLParamData<*const CStr> for Utf8StringData<'_> {
                     }
                     // copy the string, with the terminating null byte if there's room for it
                     let total_len = if p.data_size > len { len + 1 } else { len };
-                    unsafe { std::ptr::copy(cstr.as_ptr(), p.data as *mut c_char, total_len) };
+                    unsafe { std::ptr::copy(cstr.as_ptr(), p.data.cast::<c_char>(), total_len) };
                 }
                 Ok(())
             }
@@ -151,10 +151,10 @@ impl TryFrom<*mut OSSL_PARAM> for Utf8PtrData<'_> {
     fn try_from(param: *mut OSSL_PARAM) -> Result<Self, Self::Error> {
         match unsafe { param.as_mut() } {
             Some(param) => {
-                if param.data_type != OSSL_PARAM_UTF8_PTR {
-                    Err("tried to make Utf8PtrData from OSSL_PARAM with data_type != OSSL_PARAM_UTF8_PTR".to_string())
-                } else {
+                if param.data_type == OSSL_PARAM_UTF8_PTR {
                     Ok(Utf8PtrData { param })
+                } else {
+                    Err("tried to make Utf8PtrData from OSSL_PARAM with data_type != OSSL_PARAM_UTF8_PTR".to_string())
                 }
             }
             None => Err("tried to make Utf8PtrData from null pointer".to_string()),
@@ -165,7 +165,7 @@ impl TryFrom<*mut OSSL_PARAM> for Utf8PtrData<'_> {
 impl TryFrom<*mut OSSL_PARAM> for Utf8StringData<'_> {
     type Error = OSSLParamError;
 
-    /// Converts a raw OpenSSL parameter (`OSSL_PARAM`) to an `OSSLParam` enum variant (Utf8StringData).
+    /// Converts a raw OpenSSL parameter (`OSSL_PARAM`) to an `OSSLParam` enum variant (`Utf8StringData`).
     /// Ensures the pointer is not null and that the `data_type` matches an expected OpenSSL parameter type.
     /// # Examples
     ///
@@ -187,10 +187,10 @@ impl TryFrom<*mut OSSL_PARAM> for Utf8StringData<'_> {
     fn try_from(param: *mut OSSL_PARAM) -> Result<Self, Self::Error> {
         match unsafe { param.as_mut() } {
             Some(param) => {
-                if param.data_type != OSSL_PARAM_UTF8_STRING {
-                    Err("tried to make Utf8StringData from OSSL_PARAM with data_type != OSSL_PARAM_UTF8_STRING".to_string())
-                } else {
+                if param.data_type == OSSL_PARAM_UTF8_STRING {
                     Ok(Utf8StringData { param })
+                } else {
+                    Err("tried to make Utf8StringData from OSSL_PARAM with data_type != OSSL_PARAM_UTF8_STRING".to_string())
                 }
             }
             None => Err("tried to make Utf8StringData from null pointer".to_string()),

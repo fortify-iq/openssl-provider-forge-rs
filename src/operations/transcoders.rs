@@ -40,7 +40,7 @@ pub trait DoesSelection {
     fn does_selection(selection: Selection) -> bool {
         log::trace!("Called!");
 
-        log::trace!("selection: {:#b}", selection);
+        log::trace!("selection: {selection:#b}");
         log::trace!("we're offering: {:#b}", Self::SELECTION_MASK);
 
         if selection.is_empty() {
@@ -58,7 +58,7 @@ pub trait DoesSelection {
             }
         }
 
-        return false;
+        false
     }
 }
 

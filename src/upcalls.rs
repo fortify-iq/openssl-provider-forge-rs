@@ -22,7 +22,7 @@ pub struct OSSL_CORE_HANDLE {
 }
 
 pub mod traits {
-    use super::*;
+    use super::{debug, error, trace, warn, OSSL_CORE_HANDLE};
     use crate::bindings::{
         OSSL_FUNC_core_get_params_fn, OSSL_FUNC_core_gettable_params_fn, OSSL_CORE_BIO,
         OSSL_FUNC_BIO_READ_EX, OSSL_FUNC_BIO_WRITE_EX, OSSL_FUNC_CORE_GETTABLE_PARAMS,
@@ -42,18 +42,20 @@ pub mod traits {
         /// Makes a BIO_read_ex() core upcall.
         ///
         /// Refer to [BIO_read_ex(3ossl)](https://docs.openssl.org/3.5/man3/BIO_read/).
-        fn BIO_read_ex(&self, bio: *mut OSSL_CORE_BIO) -> Result<Box<[u8]>, crate::OurError> {
-            trace!(target: log_target!(), "Called");
+        ///
+        /// # Safety
+        /// See [`FFI Safety (OpenSSL)`](crate#ffi-safety-openssl).
+        unsafe fn BIO_read_ex(
+            &self,
+            bio: *mut OSSL_CORE_BIO,
+        ) -> Result<Box<[u8]>, crate::OurError> {
+            const MAX_ITERATIONS: usize = 10;
             static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
-            let fn_ptr = CELL.get_or_init(|| {
-                let f = self.fn_from_core_dispatch(OSSL_FUNC_BIO_READ_EX);
-                f
-            });
-            let fn_ptr = match fn_ptr {
-                Some(f) => f,
-                None => {
-                    return Err(anyhow::anyhow!("No upcall pointer"));
-                }
+
+            trace!(target: log_target!(), "Called");
+            let fn_ptr = CELL.get_or_init(|| self.fn_from_core_dispatch(OSSL_FUNC_BIO_READ_EX));
+            let Some(fn_ptr) = fn_ptr else {
+                return Err(anyhow::anyhow!("No upcall pointer"));
             };
 
             // FIXME: is there a way to just specify the type using the type alias OSSL_FUNC_BIO_read_ex_fn
@@ -77,14 +79,13 @@ pub mod traits {
 
             let mut ret_buffer: Vec<u8> = Vec::new();
 
-            const MAX_ITERATIONS: usize = 10;
             let mut cnt: usize = 0;
             loop {
                 cnt += 1;
                 let ret = unsafe {
                     ffi_BIO_read_ex(
                         bio,
-                        buffer.as_mut_ptr() as *mut c_void,
+                        buffer.as_mut_ptr().cast::<c_void>(),
                         buffer.capacity(),
                         &mut bytes_read,
                     )
@@ -127,23 +128,22 @@ pub mod traits {
         /// Makes a BIO_write_ex() core upcall.
         ///
         /// Refer to [BIO_write_ex(3ossl)](https://docs.openssl.org/3.2/man3/BIO_write/).
-        fn BIO_write_ex(
+        ///
+        /// # Safety
+        /// See [`FFI Safety (OpenSSL)`](crate#ffi-safety-openssl).
+        unsafe fn BIO_write_ex(
             &self,
             bio: *mut OSSL_CORE_BIO,
             data: &[u8],
         ) -> Result<usize, crate::OurError> {
-            trace!(target: log_target!(), "Called");
+            const MAX_ITERATIONS: usize = 10;
             static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
-            let fn_ptr = CELL.get_or_init(|| {
-                let f = self.fn_from_core_dispatch(OSSL_FUNC_BIO_WRITE_EX);
-                f
-            });
-            let fn_ptr = match fn_ptr {
-                Some(f) => f,
-                None => {
-                    error!(target: log_target!(), "Unable to retrieve BIO_write_ex() upcall pointer");
-                    return Err(anyhow::anyhow!("No BIO_write_ex() upcall pointer"));
-                }
+
+            trace!(target: log_target!(), "Called");
+            let fn_ptr = CELL.get_or_init(|| self.fn_from_core_dispatch(OSSL_FUNC_BIO_WRITE_EX));
+            let Some(fn_ptr) = fn_ptr else {
+                error!(target: log_target!(), "Unable to retrieve BIO_write_ex() upcall pointer");
+                return Err(anyhow::anyhow!("No BIO_write_ex() upcall pointer"));
             };
 
             // FIXME: is there a way to just specify the type using the type alias OSSL_FUNC_BIO_read_ex_fn
@@ -160,7 +160,6 @@ pub mod traits {
                 >(*fn_ptr as _)
             };
 
-            const MAX_ITERATIONS: usize = 10;
             let mut cnt: usize = 0;
             let mut total_bytes_written: usize = 0;
             let mut remaining = data;
@@ -170,7 +169,7 @@ pub mod traits {
                 let ret = unsafe {
                     ffi_BIO_write_ex(
                         bio,
-                        remaining.as_ptr() as *const c_void,
+                        remaining.as_ptr().cast::<c_void>(),
                         remaining.len(),
                         &mut bytes_written,
                     )
@@ -225,19 +224,18 @@ pub mod traits {
         /// Refer to [provider-base(7ossl)](https://docs.openssl.org/3.2/man7/provider-base/#core-functions)
         /// and [OBJ_create(3ossl)](https://docs.openssl.org/3.2/man3/OBJ_create/).
         fn OBJ_create(&self, oid: &CStr, sn: &CStr, ln: &CStr) -> Result<(), crate::OurError> {
+            /// Refer to [provider-base(7ossl)](https://docs.openssl.org/3.2/man7/provider-base/#core-functions)
+            const RET_SUCCESS: c_int = 1;
+            const RET_FAILURE: c_int = 0;
+
+            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
+
             trace!(target: log_target!(), "Called");
             let handle = self.get_core_handle();
 
-            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
-            let fn_ptr = CELL.get_or_init(|| {
-                let f = self.fn_from_core_dispatch(OSSL_FUNC_CORE_OBJ_CREATE);
-                f
-            });
-            let fn_ptr = match fn_ptr {
-                Some(f) => f,
-                None => {
-                    return Err(anyhow::anyhow!("No upcall pointer"));
-                }
+            let fn_ptr = CELL.get_or_init(|| self.fn_from_core_dispatch(OSSL_FUNC_CORE_OBJ_CREATE));
+            let Some(fn_ptr) = fn_ptr else {
+                return Err(anyhow::anyhow!("No upcall pointer"));
             };
 
             // FIXME: is there a way to just specify the type using the type alias OSSL_FUNC_core_obj_create_fn
@@ -257,10 +255,6 @@ pub mod traits {
             let oid: *const c_char = oid.as_ptr();
             let sn: *const c_char = sn.as_ptr();
             let ln: *const c_char = ln.as_ptr();
-
-            /// Refer to [provider-base(7ossl)](https://docs.openssl.org/3.2/man7/provider-base/#core-functions)
-            const RET_SUCCESS: c_int = 1;
-            const RET_FAILURE: c_int = 0;
 
             let ret = unsafe { ffi_core_obj_create(handle, oid, sn, ln) };
             match ret {
@@ -307,19 +301,19 @@ pub mod traits {
             digest_name: Option<&CStr>,
             pkey_name: &CStr,
         ) -> Result<(), crate::OurError> {
+            /// Refer to [provider-base(7ossl)](https://docs.openssl.org/3.2/man7/provider-base/#core-functions)
+            const RET_SUCCESS: c_int = 1;
+            const RET_FAILURE: c_int = 0;
+
+            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
+
             trace!(target: log_target!(), "Called");
             let handle = self.get_core_handle();
 
-            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
-            let fn_ptr = CELL.get_or_init(|| {
-                let f = self.fn_from_core_dispatch(OSSL_FUNC_CORE_OBJ_ADD_SIGID);
-                f
-            });
-            let fn_ptr = match fn_ptr {
-                Some(f) => f,
-                None => {
-                    return Err(anyhow::anyhow!("No upcall pointer"));
-                }
+            let fn_ptr =
+                CELL.get_or_init(|| self.fn_from_core_dispatch(OSSL_FUNC_CORE_OBJ_ADD_SIGID));
+            let Some(fn_ptr) = fn_ptr else {
+                return Err(anyhow::anyhow!("No upcall pointer"));
             };
 
             // FIXME: is there a way to just specify the type using the type alias OSSL_FUNC_core_obj_create_fn
@@ -343,10 +337,6 @@ pub mod traits {
                 None => core::ptr::null(),
             };
 
-            /// Refer to [provider-base(7ossl)](https://docs.openssl.org/3.2/man7/provider-base/#core-functions)
-            const RET_SUCCESS: c_int = 1;
-            const RET_FAILURE: c_int = 0;
-
             let ret = unsafe { ffi_core_obj_add_sigid(handle, sign_name, digest_name, pkey_name) };
             match ret {
                 RET_SUCCESS => Ok(()),
@@ -359,10 +349,11 @@ pub mod traits {
         #[expect(non_snake_case)]
         #[named]
         fn CORE_gettable_params(&self) -> Result<OSSLParam, crate::OurError> {
+            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
+
             trace!(target: log_target!(), "Called");
             let handle = self.get_core_handle();
 
-            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
             let fn_ptr =
                 CELL.get_or_init(|| self.fn_from_core_dispatch(OSSL_FUNC_CORE_GETTABLE_PARAMS));
             let fn_ptr = match fn_ptr {
@@ -375,7 +366,7 @@ pub mod traits {
                 unsafe { std::mem::transmute(fn_ptr) };
 
             let ret = unsafe {
-                let handle: *const crate::bindings::OSSL_CORE_HANDLE = std::mem::transmute(handle);
+                let handle: *const crate::bindings::OSSL_CORE_HANDLE = handle.cast();
                 let f = ffi_core_gettable_params.unwrap();
                 f(handle)
             };
@@ -387,10 +378,15 @@ pub mod traits {
         #[expect(non_snake_case)]
         #[named]
         fn CORE_get_params(&self, mut params: OSSLParam) -> Result<(), crate::OurError> {
+            /// Refer to [provider-base(7ossl)](https://docs.openssl.org/3.2/man7/provider-base/#core-functions)
+            const RET_SUCCESS: c_int = 1;
+            const RET_FAILURE: c_int = 0;
+
+            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
+
             trace!(target: log_target!(), "Called");
             let handle = self.get_core_handle();
 
-            static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
             let fn_ptr = CELL.get_or_init(|| self.fn_from_core_dispatch(OSSL_FUNC_CORE_GET_PARAMS));
             let fn_ptr = match fn_ptr {
                 Some(f) => (*f) as *const c_void,
@@ -402,15 +398,11 @@ pub mod traits {
                 unsafe { std::mem::transmute(fn_ptr) };
 
             let ret = unsafe {
-                let handle: *const crate::bindings::OSSL_CORE_HANDLE = std::mem::transmute(handle);
+                let handle: *const crate::bindings::OSSL_CORE_HANDLE = handle.cast();
                 let params = params.get_c_struct_mut();
                 let f = ffi_core_get_params.unwrap();
                 f(handle, params)
             };
-
-            /// Refer to [provider-base(7ossl)](https://docs.openssl.org/3.2/man7/provider-base/#core-functions)
-            const RET_SUCCESS: c_int = 1;
-            const RET_FAILURE: c_int = 0;
 
             match ret {
                 RET_SUCCESS => Ok(()),
@@ -422,7 +414,7 @@ pub mod traits {
 }
 
 use crate::bindings::OSSL_DISPATCH;
-use traits::*;
+use traits::{named, CoreUpcaller, CoreUpcallerWithCoreHandle};
 
 use std::collections::HashMap;
 
@@ -432,7 +424,7 @@ pub struct CoreDispatch<'a> {
     core_dispatch_map: HashMap<u32, &'a OSSL_DISPATCH>,
 }
 
-impl<'a> TryFrom<*const OSSL_DISPATCH> for CoreDispatch<'a> {
+impl TryFrom<*const OSSL_DISPATCH> for CoreDispatch<'_> {
     type Error = Error;
 
     #[named]
@@ -444,10 +436,13 @@ impl<'a> TryFrom<*const OSSL_DISPATCH> for CoreDispatch<'a> {
         );
 
         // convert the upcall table to a slice for easier handling
-        let core_dispatch_slice = if !ptr.is_null() {
+        let core_dispatch_slice = if ptr.is_null() {
+            error!(target: log_target!(), "Got a null core_dispatch table");
+            return Err(anyhow::anyhow!("Got a null core_dispatch table"));
+        } else {
             let mut i: usize = 0;
             loop {
-                let f = unsafe { *ptr.offset(i as isize) };
+                let f = unsafe { *ptr.add(i) };
                 if f.function_id == OSSL_DISPATCH::END.function_id {
                     break;
                 }
@@ -460,13 +455,11 @@ impl<'a> TryFrom<*const OSSL_DISPATCH> for CoreDispatch<'a> {
                 i += 1;
             }
             unsafe { std::slice::from_raw_parts(ptr, i) }
-        } else {
-            error!(target: log_target!(), "Got a null core_dispatch table");
-            return Err(anyhow::anyhow!("Got a null core_dispatch table"));
         };
 
         let mut core_dispatch_map = HashMap::with_capacity(core_dispatch_slice.len());
         for entry in core_dispatch_slice {
+            #[allow(clippy::cast_sign_loss)]
             core_dispatch_map.insert(entry.function_id as u32, entry);
         }
 
@@ -490,7 +483,7 @@ impl CoreDispatch<'_> {
     }
 }
 
-impl<'a> CoreUpcaller for CoreDispatch<'a> {
+impl CoreUpcaller for CoreDispatch<'_> {
     #[named]
     fn fn_from_core_dispatch(&self, id: u32) -> Option<unsafe extern "C" fn()> {
         trace!(target: log_target!(), "Called");
@@ -517,7 +510,7 @@ pub struct CoreDispatchWithCoreHandle<'a> {
 
 impl CoreUpcaller for CoreDispatchWithCoreHandle<'_> {
     fn fn_from_core_dispatch(&self, id: u32) -> Option<unsafe extern "C" fn()> {
-        return self.core_dispatch.fn_from_core_dispatch(id);
+        self.core_dispatch.fn_from_core_dispatch(id)
     }
 }
 
