@@ -1098,6 +1098,7 @@ impl TryFrom<*mut OSSL_PARAM> for OSSLParam<'_> {
     /// assert_eq!(my_data, 333);
     /// ```
     ///
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // we cannot mark the method unsafe because of the TryFrom trait
     fn try_from(p: *mut OSSL_PARAM) -> std::result::Result<Self, Self::Error> {
         match unsafe { p.as_mut() } {
             Some(p) => match p.data_type {

@@ -427,6 +427,8 @@ pub struct CoreDispatch<'a> {
 impl TryFrom<*const OSSL_DISPATCH> for CoreDispatch<'_> {
     type Error = Error;
 
+    #[allow(clippy::not_unsafe_ptr_arg_deref)]
+    // we cannot mark the method unsafe because of the TryFrom trait, but we are making all the checks to trat this safely
     #[named]
     fn try_from(ptr: *const OSSL_DISPATCH) -> Result<Self, Self::Error> {
         const MAX_DISPATCH_SIZE: usize = 512;

@@ -148,6 +148,7 @@ impl TryFrom<*mut OSSL_PARAM> for IntData<'_> {
     /// }
     /// ```
     ///
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // we cannot mark the method unsafe because of the TryFrom trait
     fn try_from(param: *mut OSSL_PARAM) -> Result<Self, Self::Error> {
         match unsafe { param.as_mut() } {
             Some(param) => {

@@ -87,6 +87,7 @@ impl<'a> OSSLParamGetter<&'a CStr> for OSSLParam<'_> {
 }
 
 impl TypedOSSLParamData<*const CStr> for Utf8PtrData<'_> {
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // we cannot mark the method unsafe because of the trait definition
     fn set(&mut self, value: *const CStr) -> Result<(), OSSLParamError> {
         let p = &mut *self.param;
         if p.data.is_null() {
@@ -105,6 +106,7 @@ impl TypedOSSLParamData<*const CStr> for Utf8PtrData<'_> {
 }
 
 impl TypedOSSLParamData<*const CStr> for Utf8StringData<'_> {
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // we cannot mark the method unsafe because of the trait definition
     fn set(&mut self, value: *const CStr) -> Result<(), OSSLParamError> {
         let p = &mut *self.param;
         p.return_size = 0;
@@ -148,6 +150,7 @@ impl TryFrom<*mut OSSL_PARAM> for Utf8PtrData<'_> {
     /// that the pointer is not null and that the `data_type` of the parameter matches one of the
     /// expected OpenSSL parameter types.
     ///
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // we cannot mark the method unsafe because of the TryFrom trait
     fn try_from(param: *mut OSSL_PARAM) -> Result<Self, Self::Error> {
         match unsafe { param.as_mut() } {
             Some(param) => {
@@ -183,7 +186,7 @@ impl TryFrom<*mut OSSL_PARAM> for Utf8StringData<'_> {
     ///     Err(e) => println!("Failed to convert: {:?}", e),
     /// }
     /// ```
-
+    #[allow(clippy::not_unsafe_ptr_arg_deref)] // we cannot mark the method unsafe because of the TryFrom trait
     fn try_from(param: *mut OSSL_PARAM) -> Result<Self, Self::Error> {
         match unsafe { param.as_mut() } {
             Some(param) => {
