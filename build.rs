@@ -1,7 +1,8 @@
-use std::env;
-use std::path::PathBuf;
-
+#[cfg(feature = "regen")]
 fn generate_bindings() {
+    use std::env;
+    use std::path::PathBuf;
+
     // Tell cargo to invalidate the built crate whenever the wrapper changes
     println!("cargo:rerun-if-changed=include/wrapper.h");
 
@@ -47,5 +48,6 @@ fn main() {
     // shared library.
     //println!("cargo:rustc-link-lib=bz2");
 
+    #[cfg(feature = "regen")]
     generate_bindings()
 }

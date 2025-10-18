@@ -7,6 +7,10 @@ license = "Apache-2.0"
 repository = "https://github.com/QUBIP/openssl-provider-forge-rs"
 homepage = "https://qubip.eu"
 
+[features]
+# Opt-in feature to regenerate the bindings
+regen = ["dep:bindgen", "dep:pkg-config"]
+
 [dependencies]
 anyhow = "1.0.94"
 bitflags = "2.6.0"
@@ -22,5 +26,5 @@ zeroize = "1.8.1"
 env_logger = "0.11.6"
 
 [build-dependencies]
-bindgen = "0.72.1"
-pkg-config = "0.3"
+bindgen = { version = "0.72.1", optional = true }
+pkg-config = { version = "0.3", optional = true }

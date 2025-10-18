@@ -16,7 +16,11 @@
 #[allow(non_snake_case)]
 #[allow(dead_code)]
 mod inner_bindings {
+    #[cfg(feature = "regen")]
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
+    #[cfg(not(feature = "regen"))]
+    include!("bindings/generated_bindings.rs");
 }
 
 // Then we export as pub all the symbols from the inner module.
