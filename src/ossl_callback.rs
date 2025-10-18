@@ -1,5 +1,6 @@
 use super::OurError;
-use crate::bindings::{OSSL_CALLBACK, OSSL_PARAM};
+use crate::bindings::OSSL_CALLBACK;
+use crate::osslparams::*;
 use anyhow::{anyhow, Ok};
 use std::ffi::{c_int, c_void};
 
@@ -21,8 +22,22 @@ impl OSSLCallback {
         Ok(Self { cb_fn, args })
     }
 
-    pub fn call(&self, params: *const OSSL_PARAM) -> c_int {
+    /// Low-level entry point mirroring the C ABI.
+    ///
+    /// # Safety
+    /// - `params` must satisfy the target OpenSSL callback's contract (may be NULL
+    ///   if the specific callback allows it).
+    /// - `args` is forwarded as provided by OpenSSL; the callback may read/write
+    ///   through it according to its own rules.
+    /// - All aliasing/lifetime/initialization requirements of the callback must hold.
+    pub unsafe fn call_raw(&self, params: *const OSSL_PARAM) -> c_int {
         let cb_fn = self.cb_fn;
         unsafe { cb_fn(params, self.args) }
+    }
+
+    /// Safe convenience: pass a slice of params (non-null, well-formed).
+    pub fn call<P: ?Sized + AsOsslParamPtr>(&self, params: &P) -> c_int {
+        // Safe for callers because &[T] guarantees non-null pointer + valid len.
+        unsafe { self.call_raw(params.as_ossl_param_ptr()) }
     }
 }
