@@ -25,6 +25,9 @@ pub mod data;
 #[cfg(test)]
 mod tests;
 
+mod as_ossl_param_ptr;
+pub use as_ossl_param_ptr::*;
+
 /// This enum provides different parameter data types as defined by [OSSL_PARAM(3ossl)].
 ///
 /// Each variant corresponds to a specific parameter data type
