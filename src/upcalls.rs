@@ -348,7 +348,7 @@ pub mod traits {
         /// See https://docs.openssl.org/3.2/man7/provider-base/#description
         #[expect(non_snake_case)]
         #[named]
-        fn CORE_gettable_params(&self) -> Result<OSSLParam, crate::OurError> {
+        fn CORE_gettable_params(&self) -> Result<OSSLParam<'_>, crate::OurError> {
             static CELL: OnceLock<Option<unsafe extern "C" fn()>> = OnceLock::new();
 
             trace!(target: log_target!(), "Called");
