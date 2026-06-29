@@ -13,14 +13,14 @@ regen = ["dep:bindgen", "dep:pkg-config"]
 
 [dependencies]
 anyhow = "1.0"
-bitflags = "2.9"
+bitflags = "2.13"
 crypto = { version = "0.5", features = ["std", "signature"] }
 function_name = "0.3"
 libc = "0.2"
 log = "0.4"
 num-traits = "0.2"
 num_enum = "0.7"
-zeroize = "1.8"
+zeroize = "1.9"
 
 [dev-dependencies]
 env_logger = "0.11"
