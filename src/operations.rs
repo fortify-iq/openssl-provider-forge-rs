@@ -27,5 +27,4 @@
 //!
 
 pub mod keymgmt;
-pub mod signature;
 pub mod transcoders;
