@@ -6,6 +6,7 @@
 //! parameter structures.
 //!
 //!
+use crate::bindings::c_void;
 use crate::bindings::{OSSL_PARAM, OSSL_PARAM_UNSIGNED_INTEGER};
 use crate::osslparams::{
     impl_setter, new_null_param, KeyType, OSSLParam, OSSLParamData, OSSLParamError,
@@ -27,7 +28,7 @@ impl OSSLParamData for UIntData<'_> {
     {
         let param_data = new_null_param!(UIntData, OSSL_PARAM_UNSIGNED_INTEGER, key);
         let buf = Box::into_raw(Box::new(0u64));
-        param_data.param.data = buf.cast::<std::ffi::c_void>();
+        param_data.param.data = buf.cast::<c_void>();
         param_data.param.data_size = size_of::<u64>();
         param_data
     }

@@ -2,6 +2,7 @@
 
 use std::slice::from_raw_parts;
 
+use crate::bindings::c_void;
 use crate::bindings::{OSSL_PARAM, OSSL_PARAM_OCTET_STRING};
 use crate::osslparams::{
     impl_setter, new_null_param, KeyType, OSSLParam, OSSLParamData, OSSLParamError,
@@ -18,7 +19,7 @@ impl OSSLParamData for OctetStringData<'_> {
         let param_data = new_null_param!(OctetStringData, OSSL_PARAM_OCTET_STRING, key);
         let bufsize = 1024;
         let buf = Box::into_raw(vec![0u8; bufsize].into_boxed_slice());
-        param_data.param.data = buf.cast::<std::ffi::c_void>();
+        param_data.param.data = buf.cast::<c_void>();
         param_data.param.data_size = bufsize;
         param_data
     }

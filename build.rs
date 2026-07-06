@@ -23,20 +23,30 @@ fn generate_bindings() {
         // The input header we would like to generate
         // bindings for.
         .header("include/wrapper.h")
+        // Filter only headers from OpenSSL
+        .allowlist_file(".*/openssl/.*\\.h")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         // Generate string constants as Cstrs instead of u8 arrays
         .generate_cstr(true)
+        // Use C tpes from the libc crate
+        .ctypes_prefix("libc")
+        // filter out system typedefs like __off_t, size_t families
+        .blocklist_type("__?[a-z0-9_]+_t")
+        // filter out both _intmax_t and intmax_t, signed + unsigned
+        .blocklist_type("_?u?intmax_t")
+        // include required definitions for u?intmax_t from the libc crate
+        .raw_line("use libc::{intmax_t, uintmax_t};")
         // Finish the builder and generate the bindings.
         .generate()
         // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings");
 
     // Write the bindings to the $OUT_DIR/bindings.rs file.
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    let out_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap()).join("src");
     bindings
-        .write_to_file(out_path.join("bindings.rs"))
+        .write_to_file(out_path.join("bindings").join("generated_bindings.rs"))
         .expect("Couldn't write bindings!");
 }
 

@@ -23,6 +23,7 @@ pub struct OSSL_CORE_HANDLE {
 
 pub mod traits {
     use super::{debug, error, trace, warn, OSSL_CORE_HANDLE};
+    use crate::bindings::{c_char, c_int, c_void, CStr};
     use crate::bindings::{
         OSSL_FUNC_core_get_params_fn, OSSL_FUNC_core_gettable_params_fn, OSSL_CORE_BIO,
         OSSL_FUNC_BIO_READ_EX, OSSL_FUNC_BIO_WRITE_EX, OSSL_FUNC_CORE_GETTABLE_PARAMS,
@@ -31,7 +32,6 @@ pub mod traits {
     use crate::osslparams::OSSLParam;
     pub(crate) use ::function_name::named;
     use anyhow::anyhow;
-    use std::ffi::{c_char, c_int, c_void, CStr};
     use std::sync::OnceLock;
     use zeroize::{Zeroize, Zeroizing};
     pub trait CoreUpcaller {

@@ -6,6 +6,7 @@
 
 use num_traits::ToPrimitive;
 
+use crate::bindings::c_void;
 use crate::bindings::{OSSL_PARAM, OSSL_PARAM_INTEGER};
 use crate::osslparams::{
     impl_setter, new_null_param, IntData, KeyType, OSSLParam, OSSLParamData, OSSLParamError,
@@ -25,7 +26,7 @@ impl OSSLParamData for IntData<'_> {
     fn new_null(key: &KeyType) -> Self {
         let param_data = new_null_param!(IntData, OSSL_PARAM_INTEGER, key);
         let buf = Box::into_raw(Box::new(0i64));
-        param_data.param.data = buf.cast::<std::ffi::c_void>();
+        param_data.param.data = buf.cast::<c_void>();
         param_data.param.data_size = size_of::<i64>();
         param_data
     }

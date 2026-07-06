@@ -5,8 +5,7 @@
 //! of strings via pointers.
 //!
 
-use std::ffi::{c_char, CStr};
-
+use crate::bindings::{c_char, c_void, CStr};
 use crate::bindings::{OSSL_PARAM, OSSL_PARAM_UTF8_PTR, OSSL_PARAM_UTF8_STRING};
 use crate::osslparams::{
     new_null_param, setter_type_err_string, KeyType, OSSLParam, OSSLParamData, OSSLParamError,
@@ -32,7 +31,7 @@ impl OSSLParamData for Utf8StringData<'_> {
         let param_data = new_null_param!(Utf8StringData, OSSL_PARAM_UTF8_STRING, key);
         let bufsize = 1024;
         let buf = Box::into_raw(vec![0u8; bufsize].into_boxed_slice());
-        param_data.param.data = buf.cast::<std::ffi::c_void>();
+        param_data.param.data = buf.cast::<c_void>();
         param_data.param.data_size = bufsize;
         param_data
     }

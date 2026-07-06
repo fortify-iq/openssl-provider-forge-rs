@@ -1,4 +1,5 @@
 use super::*;
+use crate::bindings::c_void;
 
 // Tests for the Iterator use of OSSLParams
 
@@ -12,7 +13,7 @@ fn test_params_iterator() {
             let dl = d.count_bytes() + 1;
             OSSL_PARAM {
                 key: c"AnArbitraryKey".as_ptr(),
-                data: d.as_ptr() as *mut std::ffi::c_void,
+                data: d.as_ptr() as *mut c_void,
                 data_type: OSSL_PARAM_UTF8_PTR,
                 return_size: 0,
                 data_size: dl,
@@ -23,7 +24,7 @@ fn test_params_iterator() {
             let dl = d.count_bytes() + 1;
             OSSL_PARAM {
                 key: c"B".as_ptr(),
-                data: d.as_ptr() as *mut std::ffi::c_void,
+                data: d.as_ptr() as *mut c_void,
                 data_type: OSSL_PARAM_UTF8_PTR,
                 return_size: 0,
                 data_size: dl,
@@ -53,7 +54,7 @@ fn test_params_intoiterator() {
             let dl = d.count_bytes() + 1;
             OSSL_PARAM {
                 key: c"AnArbitraryKey".as_ptr(),
-                data: d.as_ptr() as *mut std::ffi::c_void,
+                data: d.as_ptr() as *mut c_void,
                 data_type: OSSL_PARAM_UTF8_STRING,
                 return_size: 0,
                 data_size: dl,
@@ -64,7 +65,7 @@ fn test_params_intoiterator() {
             let dl = d.count_bytes() + 1;
             OSSL_PARAM {
                 key: c"B".as_ptr(),
-                data: d.as_ptr() as *mut std::ffi::c_void,
+                data: d.as_ptr() as *mut c_void,
                 data_type: OSSL_PARAM_UTF8_STRING,
                 return_size: 0,
                 data_size: dl,

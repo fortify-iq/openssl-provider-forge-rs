@@ -4,10 +4,8 @@
 //!
 //! [OSSL_PARAM(3ossl)]: https://docs.openssl.org/master/man3/OSSL_PARAM/
 
-use std::{
-    ffi::{c_char, CStr},
-    marker::PhantomData,
-};
+use crate::bindings::{c_char, c_void, CStr};
+use std::marker::PhantomData;
 
 // We re-export related definitions from the FFI bindings, as they are generally
 // of use to users of this module.
@@ -114,7 +112,7 @@ impl<'a> OSSLParam<'a> {
     ///
     /// ```rust
     /// use openssl_provider_forge::osslparams::*;
-    /// use std::ffi::CStr;
+    /// use openssl_provider_forge::bindings::CStr;
     ///
     /// let key: &KeyType = c"my_key";
     /// let value: &CStr = c"test value";
@@ -135,7 +133,7 @@ impl<'a> OSSLParam<'a> {
         let (data, data_size) = match value {
             Some(value) => {
                 let v = value.as_ptr();
-                let v = v as *mut std::ffi::c_void;
+                let v = v as *mut c_void;
                 let sz = value.count_bytes();
                 (v, sz)
                 //let _ = value;
@@ -166,7 +164,7 @@ impl<'a> OSSLParam<'a> {
     ///
     /// ```rust
     /// use openssl_provider_forge::osslparams::*;
-    /// use std::ffi::CStr;
+    /// use openssl_provider_forge::bindings::CStr;
     ///
     /// let key: &KeyType = c"my_key";
     /// let value: &CStr = c"test value";
@@ -191,7 +189,7 @@ impl<'a> OSSLParam<'a> {
         let (data, data_size) = match value {
             Some(value) => {
                 let v = value.as_ptr();
-                let v = v as *mut std::ffi::c_void;
+                let v = v as *mut c_void;
                 let sz = value.count_bytes();
                 (v, sz)
             }
@@ -250,7 +248,7 @@ impl<'a> OSSLParam<'a> {
         let (data, data_size) = match value {
             Some(value) => {
                 let v = std::ptr::from_ref(value);
-                let v = v as *mut std::ffi::c_void;
+                let v = v as *mut c_void;
                 let sz = size_of::<T>();
                 (v, sz)
             }
@@ -309,7 +307,7 @@ impl<'a> OSSLParam<'a> {
         let (data, data_size) = match value {
             Some(value) => {
                 let v = std::ptr::from_ref(value);
-                let v = v as *mut std::ffi::c_void;
+                let v = v as *mut c_void;
                 let sz = size_of::<T>();
                 (v, sz)
             }
@@ -318,7 +316,7 @@ impl<'a> OSSLParam<'a> {
         CONST_OSSL_PARAM {
             key: key.as_ptr().cast(),
             data_type: OSSL_PARAM_UNSIGNED_INTEGER,
-            data: data.cast::<std::ffi::c_void>(),
+            data: data.cast::<c_void>(),
             data_size,
             return_size: OSSL_PARAM_UNMODIFIED,
         }
@@ -338,8 +336,7 @@ impl<'a> OSSLParam<'a> {
     ///
     /// ```rust
     /// use openssl_provider_forge::osslparams::*;
-    /// use std::ffi::CString;
-    /// use std::os::raw::c_char;
+    /// use openssl_provider_forge::bindings::{c_char, CString};
     ///
     /// let key: &KeyType = c"octet_key";
     ///
@@ -375,7 +372,7 @@ impl<'a> OSSLParam<'a> {
         let (data, data_size) = match value {
             Some(value) => {
                 let v = std::ptr::from_ref(value);
-                let v = v as *mut std::ffi::c_void;
+                let v = v as *mut c_void;
                 let sz = value.len();
                 (v, sz)
             }
@@ -987,7 +984,7 @@ macro_rules! new_null_param {
             param: Box::leak(Box::new(crate::bindings::OSSL_PARAM {
                 key: $key.as_ptr().cast(),
                 data_type: $data_type,
-                data: std::ptr::null_mut::<std::ffi::c_void>(),
+                data: std::ptr::null_mut::<c_void>(),
                 data_size: 0,
                 return_size: 0,
             })),
@@ -1058,14 +1055,15 @@ impl TryFrom<*mut OSSL_PARAM> for OSSLParam<'_> {
     ///
     /// ```rust
     /// use openssl_provider_forge::osslparams::*;
+    /// use openssl_provider_forge::bindings::{c_char, c_void};
     ///
     /// let key = c"arbitrary key";
     /// let mut my_data: i64 = -127;
     ///
     /// let mut raw_param = OSSL_PARAM {
-    ///    key: std::ptr::from_ref(key) as *const std::ffi::c_char,
+    ///    key: std::ptr::from_ref(key) as *const c_char,
     ///    data_type: OSSL_PARAM_INTEGER,
-    ///    data: std::ptr::from_mut(&mut my_data) as *mut std::ffi::c_void,
+    ///    data: std::ptr::from_mut(&mut my_data) as *mut c_void,
     ///    data_size: size_of::<i64>(),
     ///    return_size: OSSL_PARAM_UNMODIFIED,
     /// };
@@ -1166,9 +1164,9 @@ impl TryFrom<*const OSSL_PARAM> for OSSLParam<'_> {
     /// const MY_DATA: i64 = -127;
     ///
     /// let raw_param = OSSL_PARAM {
-    ///    key: std::ptr::from_ref(key) as *const std::ffi::c_char,
+    ///    key: std::ptr::from_ref(key) as *const c_char,
     ///    data_type: OSSL_PARAM_INTEGER,
-    ///    data: std::ptr::from_ref(&MY_DATA) as *mut std::ffi::c_void,
+    ///    data: std::ptr::from_ref(&MY_DATA) as *mut c_void,
     ///    data_size: size_of::<i64>(),
     ///    return_size: OSSL_PARAM_UNMODIFIED,
     /// };
@@ -1269,7 +1267,7 @@ pub const EMPTY_PARAMS: [OSSL_PARAM; 1] = [OSSL_PARAM_END];
 ///
 /// ```rust
 /// use openssl_provider_forge::osslparams::*;
-/// use std::ffi::CStr;
+/// use openssl_provider_forge::bindings::CStr;
 ///
 /// // NOTE: it's very important valid lists of parameters are ALWAYS terminated by END item
 /// let params_list = [
@@ -1388,7 +1386,7 @@ impl<'a> Iterator for OSSLParamIterator<'a> {
 ///
 /// ```rust
 /// use openssl_provider_forge::osslparams::{OSSLParam, CONST_OSSL_PARAM, OSSLParamGetter};
-/// use std::ffi::CStr;
+/// use openssl_provider_forge::bindings::CStr;
 ///
 /// // NOTE: it's very important valid lists of parameters are ALWAYS terminated by END item
 /// let params_list = [

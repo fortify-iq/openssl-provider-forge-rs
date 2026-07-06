@@ -19,9 +19,6 @@ mod inner_bindings {
     #![allow(non_snake_case)]
     #![allow(dead_code)]
 
-    #[cfg(feature = "regen")]
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-    #[cfg(not(feature = "regen"))]
     include!("bindings/generated_bindings.rs");
 }
 
@@ -40,7 +37,7 @@ pub use inner_bindings::*;
 /// We bundle here the definitions of FFI-types for C-compatible types
 /// for easily re-exporting them in bulk.
 pub mod ffi_c_types {
-    pub use std::ffi::{c_char, c_int, c_uchar, c_uint, c_void};
+    pub use libc::{c_char, c_int, c_uchar, c_uint, c_void};
     pub use std::ffi::{CStr, CString};
 }
 
@@ -55,16 +52,7 @@ pub const OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS: &CStr = c"tls-max-dtls";
 /// when defining an `OSSL_PARAM`.
 ///
 /// It is [defined as a macro in `openssl/params.h`](https://github.com/openssl/openssl/blob/8d6fd6142b0b55ce029df6d7b63dda5f7cb8ce54/include/openssl/params.h#L22)
-/*
- * core::ffi:c_size_t is only in nightly, and unstable
- *
- * https://github.com/rust-lang/rust/issues/88345 seems to have stalled,
- * so for now we just assume c_size_t and usize are the same.
- *
- * TODO: revisit if c_size_t goes stable
- */
-// const OSSL_PARAM_UNMODIFIED: usize = core::ffi::c_size_t::MAX;
-pub const OSSL_PARAM_UNMODIFIED: usize = usize::MAX;
+pub const OSSL_PARAM_UNMODIFIED: usize = libc::size_t::MAX;
 
 /// We alias under this namespace the `CONST_OSSL_PARAM` type available under `crate::osslparams`
 pub use crate::osslparams::CONST_OSSL_PARAM;

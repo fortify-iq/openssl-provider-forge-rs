@@ -1,8 +1,7 @@
 use super::OurError;
-use crate::bindings::OSSL_CALLBACK;
+use crate::bindings::{c_int, c_void, OSSL_CALLBACK};
 use crate::osslparams::{AsOsslParamPtr, OSSL_PARAM};
 use anyhow::{anyhow, Ok};
-use std::ffi::{c_int, c_void};
 
 type InnerCB = unsafe extern "C" fn(params: *const OSSL_PARAM, arg: *mut c_void) -> c_int;
 
