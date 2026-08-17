@@ -33,7 +33,7 @@ pub mod traits {
     pub(crate) use ::function_name::named;
     use anyhow::anyhow;
     use std::sync::OnceLock;
-    use zeroize::{Zeroize, Zeroizing};
+    use zeroize::Zeroize;
     pub trait CoreUpcaller {
         fn fn_from_core_dispatch(&self, id: u32) -> Option<unsafe extern "C" fn()>;
 
@@ -74,7 +74,7 @@ pub mod traits {
 
             // We use a mutable Vec to buffer reads, so we can do big reads on the heap and minimize calls
             // we might want to tweak the capacity depending on what size data we're usually using it for
-            let mut buffer: Zeroizing<Vec<u8>> = Zeroizing::new(vec![42; 8 * 1024 * 1024]);
+            let mut buffer: Vec<u8> = vec![42; 8 * 1024 * 1024];
             let mut bytes_read: usize = 0;
 
             let mut ret_buffer: Vec<u8> = Vec::new();
@@ -114,12 +114,14 @@ pub mod traits {
                         "Reached {cnt:} upcalls to BIO_read_ex => stopping due to too many attempts"
                     );
                     ret_buffer.zeroize();
+                    buffer.zeroize();
                     return Err(anyhow::anyhow!(
                         "Underlying upcall to BIO_read_ex called too many times"
                     ));
                 }
                 ret_buffer.extend_from_slice(&buffer[0..bytes_read]);
             }
+            buffer.zeroize();
             Ok(ret_buffer.into_boxed_slice())
         }
 
